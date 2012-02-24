@@ -1,3 +1,14 @@
+/* partestaticas.c
+ * Programa que ejemplifica el funcionamiento de una particion estatica en relacion a
+ * los sistemas operativos.
+ * 
+ * Autor: Aftab Hussain Miranda
+ * Fecha de Elaboracion: 20 de Febrero del 2012.
+ *  
+ * Repositorio: https://github.com/wafto/sistemas-operativos
+ * Compilacion: gcc partestaticas.c -o app
+ * Ejecucion: ./app
+ */
 #include <stdio.h>
 #define MAX  10
 #define FREE -1
