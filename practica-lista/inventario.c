@@ -40,6 +40,7 @@ int main() {
 	initlist(&inventario);
 
 	while (1) {
+		limpiar();
 		switch (menu()) {
 			case 0:
 				if (pregunta("Desea salir del programa?")) {
