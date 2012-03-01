@@ -122,9 +122,9 @@ void limpiar() {
 }
 
 void pausar() {
-	fflush(stdin);
 	printf("Presione 'Enter' para continuar...");
-    while (getchar() != '\n');
+	fflush(stdin);
+	while (getchar() != '\n');
 }
 
 int pregunta(const char* pregunta) {

@@ -13,7 +13,7 @@ typedef struct {
 	unsigned long size;
 } List;
 
-typedef ListNode* iterator;
+typedef ListNode* Iterator;
 
 ListNode* createnode(void*);
 void initlist(List*);
