@@ -25,6 +25,7 @@ typedef struct {
 
 int menu();
 void limpiar();
+void pausar();
 void linea();
 int pregunta(const char*);
 Item* crearitem(const char *, int);
@@ -40,7 +41,6 @@ int main() {
 	initlist(&inventario);
 
 	while (1) {
-		limpiar();
 		switch (menu()) {
 			case 0:
 				if (pregunta("Desea salir del programa?")) {
@@ -119,6 +119,12 @@ void limpiar() {
 	#else
 		system("clear");
 	#endif
+}
+
+void pausar() {
+	fflush(stdin);
+	printf("Presione 'Enter' para continuar...");
+    while (getchar() != '\n');
 }
 
 int pregunta(const char* pregunta) {
