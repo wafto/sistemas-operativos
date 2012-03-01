@@ -1,5 +1,5 @@
-#ifndef LISTA_H
-#define LISTA_H
+#ifndef LIST_H
+#define LIST_H
 
 typedef struct ListNode {
 	struct ListNode* prev;
@@ -12,6 +12,8 @@ typedef struct {
 	ListNode* last;
 	unsigned long size;
 } List;
+
+typedef ListNode* iterator;
 
 ListNode* createnode(void*);
 void initlist(List*);
