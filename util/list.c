@@ -85,6 +85,30 @@ int pushatlist(List* list, unsigned long index, void* data) {
 	return 0;
 }
 
+int pushiterlist(List* list, IteratorList iter, void* data) {
+	ListNode *aux, *node;
+	if (iter != NULL) {
+		if (iter == list->first)
+			return pushfrontlist(list, data);
+		if (iter == list->last) 
+			return pushbacklist(list, data);
+		for (aux = list->first; aux != NULL; aux = aux->next) {
+			if (iter == aux) {
+				node = createnode(data);
+				if (node != NULL) {
+					node->next = aux;
+					node->prev = aux->prev;
+					aux->prev->next = node;
+					aux->prev = node;
+					list->size += 1;
+					return 1;
+				}
+			}
+		}
+	}
+	return 0;
+}
+
 void* popfrontlist(List* list) {
 	ListNode* node;
 	void* data = NULL;
@@ -145,6 +169,28 @@ void* popatlist(List* list, unsigned long index) {
 	return data;
 }
 
+void* popiterlist(List* list, IteratorList iter) {
+	ListNode* node;
+	void* data = NULL;
+	if (!isemptylist(*list) && iter != NULL) {
+		if (iter == list->first)
+			return popfrontlist(list);
+		if (iter == list->last)
+			return popbacklist(list);
+		for (node = list->first; node != NULL; node = node->next) {
+			if (iter == node) {
+				node->next->prev = node->prev;
+				node->prev->next = node->next;
+				break;
+			}
+		}
+		data = node->data;
+		free(node);
+		list->size -= 1;
+	}
+	return data;
+}
+
 void* frontlist(List list) {
 	return !isemptylist(list) ? list.first->data : NULL;
 }
@@ -171,3 +217,25 @@ void* atlist(List list, unsigned long index) {
 	}
 	return data;
 }
+
+IteratorList beginlist(List list) {
+	return list.first;
+}
+
+IteratorList endlist(List list) {
+	return list.last;
+}
+
+IteratorList nextlist(IteratorList iterator) {
+	return iterator != NULL ? iterator->next : NULL;
+}
+
+IteratorList prevlist(IteratorList iterator) {
+	return iterator != NULL ? iterator->prev : NULL;
+}
+
+void* dataiterlist(IteratorList iterator) {
+	return iterator != NULL && iterator->data != NULL ? iterator->data : NULL;
+}
+
+
