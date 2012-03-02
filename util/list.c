@@ -16,7 +16,12 @@ void initlist(List* list) {
 }
 
 void emptylist(List* list) {
-	while (!isemptylist(*list)) free(popfrontlist(list));
+	void* aux;
+	while (!isemptylist(*list)) {
+		aux = popfrontlist(list);
+		if (aux != NULL)
+			free(aux);
+	}
 }
 
 unsigned long sizelist(List list) {
