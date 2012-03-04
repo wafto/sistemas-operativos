@@ -240,7 +240,7 @@ IteratorList prevlist(IteratorList iterator) {
 }
 
 void* dataiterlist(IteratorList iterator) {
-	return iterator != NULL && iterator->data != NULL ? iterator->data : NULL;
+	return iterator != NULL ? iterator->data : NULL;
 }
 
 
