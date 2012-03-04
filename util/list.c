@@ -163,13 +163,13 @@ void* popatlist(List* list, unsigned long index) {
 			if (index == i) {
 				node->next->prev = node->prev;
 				node->prev->next = node->next;
+				data = node->data;
+				free(node);
+				list->size -= 1;
 				break;
 			}
 			i += 1;
 		}
-		data = node->data;
-		free(node);
-		list->size -= 1;
 	}
 	return data;
 }
@@ -186,12 +186,12 @@ void* popiterlist(List* list, IteratorList iter) {
 			if (iter == node) {
 				node->next->prev = node->prev;
 				node->prev->next = node->next;
+				data = node->data;
+				free(node);
+				list->size -= 1;
 				break;
 			}
 		}
-		data = node->data;
-		free(node);
-		list->size -= 1;
 	}
 	return data;
 }
