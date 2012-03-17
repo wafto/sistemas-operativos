@@ -62,7 +62,7 @@ int main(int argc, char const *argv[]) {
 	Process* process;
 	Partition* partition;
 	char user[STRSIZE], command[STRSIZE];
-	int tam, correcto;
+	int tam, correcto, bandera;
 	IteratorList iter;
 
 	initlist(&processList);
@@ -100,8 +100,15 @@ int main(int argc, char const *argv[]) {
 				for (iter = beginlist(processList); iter != NULL; iter = nextlist(iter)) {
 					process = (Process*) dataiterlist(iter);
 					if (process->pid != LIBRE && process->partition != NULL) {
+						partition = bestFitPara(process, partitionList, bandera);
+						if (bandera) {
 
-						correcto = 1;
+							correcto = 1;
+						} else {
+							printf("Insuficiente memoria para la solicitud, se vuelve a encolar.\n");
+							process = (Process*) popiterlist(processList, iter);
+							pushbacklist(processList, process);
+						}
 						break;
 					}
 				}
