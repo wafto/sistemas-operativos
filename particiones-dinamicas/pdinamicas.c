@@ -40,6 +40,8 @@ void linea();
 void limpia();
 int pregunta(const char*);
 Partition* bestFitPara(Process*, List, int*);
+int agregarProceso(List*, Partition*, Process*, int*, int*);
+void compactacionContigua(List*);
 
 int menu () {
 	int opt;
@@ -47,8 +49,9 @@ int menu () {
 	printf(" 1 - Capturar Solicitud.\n");
 	printf(" 2 - Cargar Proceso.\n");
 	printf(" 3 - Terminar Proceso.\n");
-	printf(" 4 - Mostrar Estado.\n");
-	printf(" 5 - Salir.\n");
+	printf(" 4 - Mostrar Tabla de Procesos.\n");
+	printf(" 5 - Mostrar Tabla de Particiones.\n");
+	printf(" 0 - Salir.\n");
 	printf("\tOpcion: ");
 	scanf("%d", &opt);
 	linea();
@@ -62,7 +65,7 @@ int main(int argc, char const *argv[]) {
 	Process* process;
 	Partition* partition;
 	char user[STRSIZE], command[STRSIZE];
-	int tam, correcto, bandera;
+	int tam, correcto, bandera, stat;
 	IteratorList iter;
 
 	initlist(&processList);
@@ -74,6 +77,14 @@ int main(int argc, char const *argv[]) {
 
 	while(1) {
 		switch (menu()) {
+			case 0:
+				if (pregunta("Desea salir del programa?")) {
+					printf("Adios\n");
+					return 0;
+				} else {
+					printf("Accion de salir cancelada.\n");
+				}
+				break;
 			case 1:
 				do {
 					printf("Usuario para la solicitud: ");
@@ -93,40 +104,89 @@ int main(int argc, char const *argv[]) {
 					} else {
 						printf("Error al crear solicitud.\n");
 					}
-				} while(pregunta("Desea Capturar otra solicitud."));
+					linea();
+				} while(pregunta("Desea Capturar otra solicitud?"));
 				break;
 			case 2:
+				do {
+					stat = correcto = 0;
+					for (iter = beginlist(processList); iter != NULL; iter = nextlist(iter)) {
+						process = (Process*) dataiterlist(iter);
+						if (process->pid == LIBRE && process->partition == NULL) {
+							printf("Se procede a cargar la solicitud del usuario %s con tamaño %d.\n", process->user, process->size);
+							partition = bestFitPara(process, partitionList, &bandera);
+							if (bandera) {
+								agregarProceso(&partitionList, partition, process, &pidCounter, &partitionCounter);
+								correcto = 1;
+							} else {
+								printf("Insuficiente memoria para la solicitud, se vuelve a encolar.\n");
+								pushbacklist(&processList, popiterlist(&processList, iter));
+								stat = 1;
+							}
+							break;
+						}
+					}
+					if (correcto) {
+						printf("Se cargo el proceso con el pid %d.\n", process->pid);
+					} else {
+						printf("No se pudo cargar un proceso.\n");
+						if (stat == 0)
+							printf("Debido a que no hay solicitudes pendientes.\n");
+						break;
+					}
+					linea();
+				} while(pregunta("Desea Cargar otro proceso?"));
+				break;
+			case 3:
+				printf("Ingrese el PID del proceso que desea eliminar: ");
+				scanf("%d", &bandera);
 				correcto = 0;
 				for (iter = beginlist(processList); iter != NULL; iter = nextlist(iter)) {
 					process = (Process*) dataiterlist(iter);
-					if (process->pid != LIBRE && process->partition != NULL) {
-						partition = bestFitPara(process, partitionList, bandera);
-						if (bandera) {
-
-							correcto = 1;
-						} else {
-							printf("Insuficiente memoria para la solicitud, se vuelve a encolar.\n");
-							process = (Process*) popiterlist(processList, iter);
-							pushbacklist(processList, process);
-						}
+					if (process->pid != LIBRE && process->partition != NULL && process->pid == bandera) {
+						popiterlist(&processList, iter);
+						process->partition->status = LIBRE;
+						compactacionContigua(&partitionList);
+						free(process);
+						correcto = 1;
 						break;
 					}
 				}
-				if (correcto)
-					printf("Se cargo el proceso con el pid %d.\n", process->pid);
+				if (correcto == 1)
+					printf("Se elimino el proceso inicado.\n");
 				else
-					printf("No se pudo cargar el proceso.\n");
-				break;
-			case 3:
+					printf("No se pudo encontrar el proceso indicado para eliminarlo.\n");
 				break;
 			case 4:
+				if (!isemptylist(processList)) {
+					printf("pid \tuser \tsize \tpart \taddr \tcommand \n");
+					linea();
+					for (iter = beginlist(processList); iter != NULL; iter = nextlist(iter)) {
+						process = (Process*) dataiterlist(iter);
+						if (process->pid != LIBRE && process->partition != NULL) {
+							printf("%d \t%s \t%d \t%d \t%d \t%s \n",
+								process->pid,
+								process->user,
+								process->size,
+								process->partition->number,
+								process->partition->address,
+								process->command);
+						}
+					}
+				}
 				break;
 			case 5:
-				if (pregunta("Desea salir del programa?")) {
-					printf("Adios\n");
-					return 0;
-				} else {
-					printf("Accion de salir cancelada.\n");
+				if (!isemptylist(partitionList)) {
+					printf("num \tsize \taddr \tstatus \n");
+					linea();
+					for (iter = beginlist(partitionList); iter != NULL; iter = nextlist(iter)) {
+						partition = (Partition*) dataiterlist(iter);
+						printf("%d \t%d \t%d \t%d \n", 
+							partition->number,
+							partition->size,
+							partition->address,
+							partition->status);
+					}
 				}
 				break;
 			default:
@@ -199,6 +259,54 @@ Partition* bestFitPara(Process* process, List partList, int* flag) {
 	return best;
 }
 
+int agregarProceso(List* lista, Partition* particion, Process* proceso, int* cproc, int* cpart) {
+	IteratorList iter;
+	Partition *aux, *nuevo;
+	unsigned long index = 0;
+	int tam, addr;
+	if (!isemptylist(*lista) && particion != NULL && proceso != NULL && proceso->size <= particion->size) {
+		if (proceso->size != particion->size) {
+			for (iter = beginlist(*lista); iter != NULL; iter = nextlist(iter)) {
+				index += 1;
+				aux = (Partition*) dataiterlist(iter);
+				if (aux == particion) {
+					tam = particion->size - proceso->size;
+					addr = particion->address + proceso->size;
+					nuevo = creaPartition((*cpart)++, tam, addr, LIBRE);
+					pushatlist(lista, index, nuevo);
+					particion->size -= tam; 
+					break;
+				}
+			}
+		}
+		proceso->pid = ++(*cproc);
+		proceso->partition = particion;
+		proceso->partition->status = proceso->pid;
+		return 1;
+	}
+	return 0;
+}
 
-
+void compactacionContigua(List* lista) {
+	IteratorList current, next;
+	Partition *particion, *siguiente;
+	int bandera;
+	do {
+		bandera = 0;
+		if (sizelist(*lista) > 1) {
+			for (current = beginlist(*lista); current != NULL && nextlist(current) != NULL; current = nextlist(current)) {
+				next = nextlist(current);
+				particion = (Partition*) dataiterlist(current);
+				siguiente = (Partition*) dataiterlist(next);
+				if (particion->status == LIBRE && siguiente->status == LIBRE) {
+					siguiente = (Partition*) popiterlist(lista, next);
+					particion->size += siguiente->size;
+					free(siguiente);
+					bandera = 1;
+					break;
+				}
+			}
+		}
+	} while(bandera);
+}
 
