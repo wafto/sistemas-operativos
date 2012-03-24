@@ -240,3 +240,30 @@ void imprimeTablaParticiones(List* particiones) {
 		printf("Tabla vacia.\n");
 	}
 }
+
+void compactacionContigua(List* particiones) {
+	Particion *actual, *siguiente;
+	IteratorList ic, in;
+	int continuar;
+	do {
+		continuar = 0;
+		if (sizelist(*particiones) > 1) {
+			for (ic = beginlist(*particiones); ic != NULL && nextlist(ic) != NULL; ic = nextlist(ic)) {
+				in = nextlist(ic);
+				actual = (Particion*) dataiterlist(ic);
+				siguiente = (Particion*) dataiterlist(in);
+				if (actual->proceso == NULL && siguiente->proceso == NULL) {
+					siguiente = (Particion*) popiterlist(particiones, in);
+					actual->tam += siguiente->tam;
+					free(siguiente);
+					bandera = 1;
+					break;
+				}
+			}
+		}
+	} while(continuar);
+}
+
+void compactacionCompleta(List* particiones) {
+
+}
