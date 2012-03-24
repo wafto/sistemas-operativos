@@ -95,18 +95,25 @@ int pushiterlist(List* list, IteratorList iter, void* data) {
 	if (iter != NULL) {
 		if (iter == list->first)
 			return pushfrontlist(list, data);
-		if (iter == list->last) 
-			return pushbacklist(list, data);
-		for (aux = list->first; aux != NULL; aux = aux->next) {
-			if (iter == aux) {
-				node = createnode(data);
-				if (node != NULL) {
-					node->next = aux;
-					node->prev = aux->prev;
-					aux->prev->next = node;
-					aux->prev = node;
-					list->size += 1;
-					return 1;
+		node = createnode(data);
+		if (node != NULL) {
+			if (iter == list->last) {
+				node->prev = list->last->prev;
+				node->next = list->last;
+				list->last->prev->next = node;
+				list->last->prev = node;
+				list->size += 1;
+				return 1;
+			} else {
+				for (aux = list->first->next; aux != NULL; aux = aux->next) {
+					if (aux == iter) {
+						node->next = aux;
+						node->prev = aux->prev;
+						aux->prev->next = node;
+						aux->prev = node;
+						list->size += 1;
+						return 1;
+					}
 				}
 			}
 		}
