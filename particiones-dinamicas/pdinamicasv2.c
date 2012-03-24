@@ -110,6 +110,7 @@ int main() {
 				printf("Ingrese el PID del proceso que desea eliminar: ");
 				scanf("%d", &numaux);
 				if (eliminarProceso(&particiones, numaux)) {
+					compactacionContigua(&particiones);
 					printf("Se elimino con exito el proceso.\n");
 				} else {
 					printf("No se encontro el PID del proceso para eliminar.\n");
@@ -256,14 +257,36 @@ void compactacionContigua(List* particiones) {
 					siguiente = (Particion*) popiterlist(particiones, in);
 					actual->tam += siguiente->tam;
 					free(siguiente);
-					bandera = 1;
+					continuar = 1;
 					break;
 				}
 			}
 		}
-	} while(continuar);
+	} while (continuar);
 }
 
 void compactacionCompleta(List* particiones) {
-
+	Particion* particion;
+	IteratorList* iter;
+	int memoria = 0;
+	if (sizelist(*particiones) > 1) {
+		for (iter = beginlist(*particiones); iter != NULL; iter = nextlist(iter)) {
+			particion = (Particion*) dataiterlist(iter);
+			if (particion->proceso == NULL) {
+				particion = (Particion*) popiterlist(particiones, iter);
+				memoria += particion->tam;
+				free(particion);
+			}
+		}
+		if (memoria > 0) {
+			pushbacklist(particiones, crearParticion(memoria, memoria, NULL));
+			for (iter = beginlist(*particiones); iter != NULL; iter = nextlist(iter)) {
+				particion = (Particion*) dataiterlist(iter);
+				/* Necesitamos arreglar direcciones */
+			}
+		}
+	}
 }
+
+
+
