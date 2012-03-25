@@ -44,6 +44,7 @@ int eliminarProceso(List*, int);
 void imprimeTablaParticiones(List*);
 void compactacionContigua(List*);
 void compactacionCompleta(List*);
+int memoriaLibre(List);
 
 /* Principal */
 int main() {
@@ -81,7 +82,7 @@ int main() {
 						if (!correcto)
 							printf("Tamaño de solicitud no valido, vuelva a intentar.\n");
 					} while (!correcto);
-					pushbacklist(&solicitudes, crearProceso(contadorPid++, usuario, comando, numaux));
+					pushbacklist(&solicitudes, crearProceso(-1, usuario, comando, numaux));
 					printf("Se agrego una nueva solicitud en la cola.\n");
 					linea();
 				} while (pregunta("Desea agregar otra solicitud?"));
@@ -91,12 +92,17 @@ int main() {
 					if (!isemptylist(solicitudes)) {
 						proceso = (Proceso*) popfrontlist(&solicitudes);
 						bandera = agregarPorBestFit(&particiones, proceso);
+						if (!bandera && memoriaLibre(particiones) >= proceso->tam) {
+							compactacionCompleta(&particiones);
+							bandera = agregarPorBestFit(&particiones, proceso);
+						}
 						if (!bandera) {
 							printf("No se tienen particiones libres para tal tamaño.\n");
 							pushbacklist(&solicitudes, proceso);
 							printf("La solicitud se vuelve a encolar.\n");
 							break;
 						} else {
+							proceso->pid = contadorPid++;
 							printf("Se agrego exitosamente con el usuario %s y PID %d.\n", proceso->usuario, proceso->pid);
 						}
 					} else {
@@ -115,7 +121,6 @@ int main() {
 				} else {
 					printf("No se encontro el PID del proceso para eliminar.\n");
 				}
-				linea();
 				break;
 			case 4:
 				imprimeTablaParticiones(&particiones);
@@ -267,25 +272,44 @@ void compactacionContigua(List* particiones) {
 
 void compactacionCompleta(List* particiones) {
 	Particion* particion;
-	IteratorList* iter;
-	int memoria = 0;
-	if (sizelist(*particiones) > 1) {
-		for (iter = beginlist(*particiones); iter != NULL; iter = nextlist(iter)) {
-			particion = (Particion*) dataiterlist(iter);
-			if (particion->proceso == NULL) {
-				particion = (Particion*) popiterlist(particiones, iter);
-				memoria += particion->tam;
-				free(particion);
-			}
-		}
-		if (memoria > 0) {
-			pushbacklist(particiones, crearParticion(memoria, memoria, NULL));
+	IteratorList iter;
+	int nuevodir = 0, memoria = 0, continuar;
+	do {
+		continuar = 0;
+		if (sizelist(*particiones) > 1) {
 			for (iter = beginlist(*particiones); iter != NULL; iter = nextlist(iter)) {
 				particion = (Particion*) dataiterlist(iter);
-				/* Necesitamos arreglar direcciones */
+				if (particion != NULL && particion->proceso == NULL) {
+					particion = (Particion*) popiterlist(particiones, iter);
+					memoria += particion->tam;
+					free(particion);
+					continuar = 1;
+					break;
+				}
 			}
 		}
+	} while (continuar);
+	if (memoria > 0) {
+		pushbacklist(particiones, crearParticion(memoria, 0, NULL));
+		for (iter = beginlist(*particiones); iter != NULL; iter = nextlist(iter)) {
+			particion = (Particion*) dataiterlist(iter);
+			particion->direccion = nuevodir;
+			nuevodir += particion->tam;
+		}
 	}
+}
+
+int memoriaLibre(List particiones) {
+	int libre = 0;
+	IteratorList iter;
+	Particion* particion;
+	if (!isemptylist(particiones)) {
+		for (iter = beginlist(particiones); iter != NULL; iter = nextlist(iter)) {
+			particion = (Particion*) dataiterlist(iter);
+			libre += particion->proceso == NULL ? particion->tam : 0;
+		}
+	}
+	return libre;
 }
 
 
