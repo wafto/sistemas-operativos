@@ -221,11 +221,13 @@ void* atlist(List list, unsigned long index) {
 		if (index == sizelist(list) - 1)
 			return backlist(list);
 		for (node = list.first; node != NULL; node = node->next) {
-			if (index == i)
+			if (index == i) {
+				data = node->data;
 				break;
+			}
 			i += 1;
 		}
-		data = node->data;
+		
 	}
 	return data;
 }
