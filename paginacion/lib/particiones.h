@@ -38,7 +38,7 @@ typedef struct {
 #define CONTROL_SOLICITUD 1
 #define SOLICITUD_CONTROL 2
 
-/* Acciones para los nodos */
+/* Estados para los nodos */
 #define AGREGAR 1
 #define SACAR   2
 #define VACIA   3
