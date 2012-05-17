@@ -1,0 +1,55 @@
+#ifndef PARTICIONES_H
+#define PARTICIONES_H
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+#define STR_USUARIO 32
+
+typedef struct {
+	int tam;
+	char usuario[STR_USUARIO];
+} Solicitud;
+
+typedef struct {
+	long tipo;
+	int accion;
+	union {
+		Solicitud solicitud;
+	} dato;
+} NodoIPC;
+
+typedef struct {
+	key_t llave;
+	int cola;
+	NodoIPC nodo;
+} ColaIPC;
+
+
+#define IPC_LONGITUD (sizeof(NodoIPC) - sizeof(long))
+#define FLLAVE "/bin/ls"
+#define CLAVE 33
+
+/* Tipos de Nodos, especifican la direccion de la comunicacion */
+#define CONTROL_SOLICITUD 1
+#define SOLICITUD_CONTROL 2
+
+/* Acciones para los nodos */
+#define AGREGAR 1
+#define SACAR   2
+#define VACIA   3
+#define FRACASO 4
+#define EXITO   5
+#define SALIR   6
+
+int inicializar(ColaIPC*);
+int enviar(ColaIPC*, long, int);
+int recibir(ColaIPC*, long);
+
+Solicitud* crearSolicitud(int, const char*);
+
+#endif
