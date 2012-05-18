@@ -23,12 +23,10 @@ int main() {
 	ColaIPC cola;
 	int opcion, invalida, pagtam, memtam = 0;
 
-/*
 	if (!inicializar(&cola)) {
 		perror("Error al obtener el identificador de la cola de mensajes.");
 		exit(-1);
 	}
-*/
 
 	system("clear");
 	do {
@@ -50,8 +48,6 @@ int main() {
 			printf("Debe ser multiplo del tamaño de memoria.\n");
 		}
 	} while (invalida);
-
-	return 0;
 
 	do {
 		linea();
