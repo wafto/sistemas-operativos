@@ -30,7 +30,6 @@ int main() {
 
 	system("clear");
 	do {
-		linea();
 		printf("Cuanta memoria quiere: ");
 		scanf("%d", &memtam);
 		invalida = (memtam <= 0) ? 1 : 0;
@@ -66,7 +65,7 @@ int main() {
 			case 1:
 				do {
 					printf("Se procede a agregar una nueva solicitud\n");
-					printf(" - Tamaño: ");
+					printf(" - Tamaño en memoria: ");
 					scanf("%d", &cola.nodo.dato.solicitud.tam);
 					printf(" - Usuario: ");
 					scanf("%s", &(cola.nodo.dato.solicitud.usuario)[0]);
@@ -98,7 +97,7 @@ int main() {
 
 
 		
-	} while(opcion != 0);
+	} while (opcion != 0);
 
 	/* Terminacion de solicitudes */
 	enviar(&cola, CONTROL_SOLICITUD, SALIR);
