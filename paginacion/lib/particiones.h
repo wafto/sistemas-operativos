@@ -55,5 +55,8 @@ Solicitud* crearSolicitud(int, const char*);
 Proceso* crearProceso(int, int, int, const char*);
 Tabla* crearTabla(int);
 int inicializarPaginacion(Paginacion*, int);
+int estaVaciaSolicitudes(Paginacion);
+int agregarSolicitud(Paginacion*, int, const char*);
+int cargarSolicitud(Paginacion*);
 
 #endif

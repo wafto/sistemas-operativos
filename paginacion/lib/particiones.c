@@ -68,3 +68,24 @@ int inicializarPaginacion(Paginacion* paginacion, int memoria) {
 	}
 	return 0;
 }
+
+int estaVaciaSolicitudes(Paginacion paginacion) {
+	return isemptylist(*paginacion.solicitudes);
+}
+
+int agregarSolicitud(Paginacion* paginacion, int tam, const char* usuario) {
+	Solicitud* solicitud = crearSolicitud(tam, usuario);
+	if (solicitud != NULL)
+		return pushfrontlist(paginacion, solicitud);
+	return 0;
+}
+
+int cargarSolicitud(Paginacion* paginacion) {
+	if (!estaVaciaSolicitudes(*paginacion)) {
+		/* Procedemos a cargarla a memoria */
+	}
+	return 0;
+}
+
+
+
