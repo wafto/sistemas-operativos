@@ -1,20 +1,5 @@
 #include "particiones.h"
 
-int inicializar(ColaIPC* ipc) {
-	ipc->llave = ftok(FLLAVE, CLAVE);
-	return (ipc->cola = msgget(ipc->llave, IPC_CREAT | 0600)) == -1 ? 0 : 1;
-}
-
-int enviar(ColaIPC* ipc, long tipo, int accion) {
-	ipc->nodo.tipo = tipo;
-	ipc->nodo.accion = accion;
-	return msgsnd(ipc->cola, &ipc->nodo, IPC_LONGITUD, IPC_NOWAIT);
-}
-
-int recibir(ColaIPC* ipc, long tipo) {
-	return msgrcv(ipc->cola, &ipc->nodo, IPC_LONGITUD, tipo, 0);
-}
-
 Solicitud* crearSolicitud(int tam, const char* usuario) {
 	Solicitud* solicitud = (Solicitud*) malloc(sizeof(Solicitud));
 	if (solicitud != NULL) {
@@ -49,4 +34,37 @@ Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 		}
 	}
 	return proceso;
+}
+
+Tabla* crearTabla(int tam) {
+	Tabla* tabla = NULL;
+	int i;
+	if (tam > 0) {
+		tabla = (Tabla*) malloc(sizeof(Tabla));
+		if (tabla != NULL) {
+			tabla->marcos = (Marco*) malloc(sizeof(Marco * tam));
+			if (tabla->marcos == NULL) {
+				free(tabla);
+				tabla = NULL;
+			} else {
+				for (i = 0; i < tam; i++) {
+					tabla->marcos[i].estado = 0;
+					tabla->marcos[i].proceso = NULL;
+					tabla->marcos[i].pagina = 0;
+				}
+			}
+		}
+	}
+	return tabla;
+}
+
+int inicializarPaginacion(Paginacion* paginacion, int memoria) {
+	if (memoria > 0) {
+		paginacion->memfisica = crearTabla(memoria);
+		paginacion->memvirtual = crearTabla(memoria);
+		initlist(paginacion->solicitudes);
+		initlist(paginacion->procesos);
+		return paginacion->memfisica != NULL && paginacion->memvirtual != NULL ? 1 : 0;
+	}
+	return 0;
 }
