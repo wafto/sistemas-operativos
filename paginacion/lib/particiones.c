@@ -81,7 +81,9 @@ int agregarSolicitud(Paginacion* paginacion, int tam, const char* usuario) {
 }
 
 int cargarSolicitud(Paginacion* paginacion) {
+	Solicitud* solicitud;
 	if (!estaVaciaSolicitudes(*paginacion)) {
+		solicitud = (Solicitud*) popbacklist(paginacion->solicitudes);
 		/* Procedemos a cargarla a memoria */
 	}
 	return 0;
