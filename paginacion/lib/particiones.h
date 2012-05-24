@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include "../../util/list.h"
 
 #define MAXSTR    32
 
@@ -49,12 +50,14 @@ typedef struct {
 	List procesos;
 	Tabla* memfisica;
 	Tabla* memvirtual;
+	int cpids;
+	int tampag;
 } Paginacion;
 
 Solicitud* crearSolicitud(int, const char*);
 Proceso* crearProceso(int, int, int, const char*);
 Tabla* crearTabla(int);
-int inicializarPaginacion(Paginacion*, int);
+int inicializarPaginacion(Paginacion*, int, int);
 int estaVaciaSolicitudes(Paginacion);
 int agregarSolicitud(Paginacion*, int, const char*);
 int cargarSolicitud(Paginacion*);

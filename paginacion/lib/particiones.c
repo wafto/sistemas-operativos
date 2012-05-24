@@ -42,7 +42,7 @@ Tabla* crearTabla(int tam) {
 	if (tam > 0) {
 		tabla = (Tabla*) malloc(sizeof(Tabla));
 		if (tabla != NULL) {
-			tabla->marcos = (Marco*) malloc(sizeof(Marco * tam));
+			tabla->marcos = (Marco*) malloc(sizeof(Marco) * tam);
 			if (tabla->marcos == NULL) {
 				free(tabla);
 				tabla = NULL;
@@ -58,33 +58,46 @@ Tabla* crearTabla(int tam) {
 	return tabla;
 }
 
-int inicializarPaginacion(Paginacion* paginacion, int memoria) {
-	if (memoria > 0) {
+int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
+	if (memoria > 0 && tampag > 0) {
+		paginacion->cpids = 0;
+		paginacion->tampag = tampag;
 		paginacion->memfisica = crearTabla(memoria);
 		paginacion->memvirtual = crearTabla(memoria);
-		initlist(paginacion->solicitudes);
-		initlist(paginacion->procesos);
+		initlist(&paginacion->solicitudes);
+		initlist(&paginacion->procesos);
 		return paginacion->memfisica != NULL && paginacion->memvirtual != NULL ? 1 : 0;
 	}
 	return 0;
 }
 
 int estaVaciaSolicitudes(Paginacion paginacion) {
-	return isemptylist(*paginacion.solicitudes);
+	return isemptylist(paginacion.solicitudes);
 }
 
 int agregarSolicitud(Paginacion* paginacion, int tam, const char* usuario) {
 	Solicitud* solicitud = crearSolicitud(tam, usuario);
 	if (solicitud != NULL)
-		return pushfrontlist(paginacion, solicitud);
+		return pushfrontlist(&paginacion->solicitudes, solicitud);
 	return 0;
 }
 
 int cargarSolicitud(Paginacion* paginacion) {
 	Solicitud* solicitud;
+	Proceso* proceso;
 	if (!estaVaciaSolicitudes(*paginacion)) {
-		solicitud = (Solicitud*) popbacklist(paginacion->solicitudes);
-		/* Procedemos a cargarla a memoria */
+		solicitud = (Solicitud*) popbacklist(&paginacion->solicitudes);
+		proceso = crearProceso(
+			++paginacion->cpids,
+			solicitud->tam,
+			paginacion->tampag,
+			solicitud->usuario
+		);
+		free(solicitud);
+		if (proceso != NULL && pushbacklist(&paginacion->procesos)) {
+			/* Hasta este punto tenemos el proceso en nuestra lista */
+		}
+		return 1;
 	}
 	return 0;
 }
