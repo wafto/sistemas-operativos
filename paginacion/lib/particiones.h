@@ -9,7 +9,7 @@
 
 #define MAXSTR    32
 
-/* Estado de los procesos */
+/* Estados de los procesos */
 #define LISTO     1
 #define ESPERA    2
 #define EJECUCION 3
@@ -42,6 +42,7 @@ typedef struct {
 } Marco;
 
 typedef struct {
+	int tam;
 	Marco* marcos;
 } Tabla;
 
@@ -60,6 +61,9 @@ Tabla* crearTabla(int);
 int inicializarPaginacion(Paginacion*, int, int);
 int estaVaciaSolicitudes(Paginacion);
 int agregarSolicitud(Paginacion*, int, const char*);
+int paginasLibresMemFisica(Paginacion);
+int paginasLibresMemVirtual(Paginacion);
+int paginasLibres(Paginacion);
 int cargarSolicitud(Paginacion*);
 
 #endif

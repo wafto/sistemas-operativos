@@ -47,6 +47,7 @@ Tabla* crearTabla(int tam) {
 				free(tabla);
 				tabla = NULL;
 			} else {
+				tabla->tam = tam;
 				for (i = 0; i < tam; i++) {
 					tabla->marcos[i].estado = 0;
 					tabla->marcos[i].proceso = NULL;
@@ -82,10 +83,28 @@ int agregarSolicitud(Paginacion* paginacion, int tam, const char* usuario) {
 	return 0;
 }
 
+int paginasLibresMemFisica(Paginacion paginacion) {
+	int i, libre = 0;
+	for (i = 0; i < paginacion.memfisica->tam; i++)
+		libre += paginacion.memfisica->marcos[i].proceso == NULL ? 1 : 0;
+	return libre;
+}
+
+int paginasLibresMemVirtual(Paginacion paginacion) {
+	int i, libre = 0;
+	for (i = 0; i < paginacion.memvirtual->tam; i++)
+		libre += paginacion.memvirtual->marcos[i].proceso == NULL ? 1 : 0;
+	return libre;
+}
+
+int paginasLibres(Paginacion paginacion) {
+	return paginasLibresMemFisica(paginacion) + paginasLibresMemVirtual(paginacion);
+}
+
 int cargarSolicitud(Paginacion* paginacion) {
 	Solicitud* solicitud;
 	Proceso* proceso;
-	if (!estaVaciaSolicitudes(*paginacion)) {
+	if (!estaVaciaSolicitudes(*paginacion) && paginasLibres(*paginacion)) {
 		solicitud = (Solicitud*) popbacklist(&paginacion->solicitudes);
 		proceso = crearProceso(
 			++paginacion->cpids,
