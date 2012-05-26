@@ -10,8 +10,26 @@
  */
  #include "lib/particiones.h"
 
- int main() {
+int main() {
 
+	Paginacion paginacion;
+	inicializarPaginacion(&paginacion, 1000, 80);
+	
 
- 	return 0;
- }
+	printf("\nTabla de Solicitudes\n");
+	agregarSolicitud(&paginacion, 320, "aftab");
+	agregarSolicitud(&paginacion, 230, "hussain");
+	agregarSolicitud(&paginacion, 150, "root");
+	agregarSolicitud(&paginacion, 570, "foo");
+	agregarSolicitud(&paginacion, 490, "bar");
+	imprimeTablaSolicitudes(paginacion);
+
+	printf("\nTabla de Procesos\n");
+	cargarSolicitud(&paginacion);
+	imprimeTablaProcesos(paginacion);
+
+	printf("\nMemorias\n");
+	imprimeTablaMemorias(paginacion);
+
+	return 0;
+}

@@ -65,5 +65,8 @@ int paginasLibresMemFisica(Paginacion);
 int paginasLibresMemVirtual(Paginacion);
 int paginasLibres(Paginacion);
 int cargarSolicitud(Paginacion*);
+void imprimeTablaSolicitudes(Paginacion);
+void imprimeTablaProcesos(Paginacion);
+void imprimeTablaMemorias(Paginacion);
 
 #endif

@@ -60,11 +60,13 @@ Tabla* crearTabla(int tam) {
 }
 
 int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
+	int mem;
 	if (memoria > 0 && tampag > 0) {
+		mem = (memoria / tampag) + (memoria % tampag == 0 ? 0 : 1);
 		paginacion->cpids = 0;
 		paginacion->tampag = tampag;
-		paginacion->memfisica = crearTabla(memoria);
-		paginacion->memvirtual = crearTabla(memoria);
+		paginacion->memfisica = crearTabla(mem);
+		paginacion->memvirtual = crearTabla(mem);
 		initlist(&paginacion->solicitudes);
 		initlist(&paginacion->procesos);
 		return paginacion->memfisica != NULL && paginacion->memvirtual != NULL ? 1 : 0;
@@ -79,7 +81,7 @@ int estaVaciaSolicitudes(Paginacion paginacion) {
 int agregarSolicitud(Paginacion* paginacion, int tam, const char* usuario) {
 	Solicitud* solicitud = crearSolicitud(tam, usuario);
 	if (solicitud != NULL)
-		return pushfrontlist(&paginacion->solicitudes, solicitud);
+		return pushbacklist(&paginacion->solicitudes, solicitud);
 	return 0;
 }
 
@@ -104,22 +106,93 @@ int paginasLibres(Paginacion paginacion) {
 int cargarSolicitud(Paginacion* paginacion) {
 	Solicitud* solicitud;
 	Proceso* proceso;
-	if (!estaVaciaSolicitudes(*paginacion) && paginasLibres(*paginacion)) {
-		solicitud = (Solicitud*) popbacklist(&paginacion->solicitudes);
+	int i, j, libresFisica, libresVirtual;
+	libresFisica = paginasLibresMemFisica(*paginacion);
+	libresVirtual = paginasLibresMemVirtual(*paginacion);
+	if (!estaVaciaSolicitudes(*paginacion) && (libresFisica + libresVirtual) > 0) {
+		solicitud = (Solicitud*) popfrontlist(&paginacion->solicitudes);
 		proceso = crearProceso(
 			++paginacion->cpids,
 			solicitud->tam,
 			paginacion->tampag,
 			solicitud->usuario
 		);
-		free(solicitud);
-		if (proceso != NULL && pushbacklist(&paginacion->procesos)) {
-			/* Hasta este punto tenemos el proceso en nuestra lista */
+		if (proceso != NULL && (libresFisica + libresVirtual) >= proceso->npag) {
+			free(solicitud);
+			if (pushbacklist(&paginacion->procesos, proceso)) {
+				j = 0;
+				if (libresFisica > 0) {
+					for (i = 0; i < paginacion->memfisica->tam && j < proceso->npag; i++) {
+						if (paginacion->memfisica->marcos[i].proceso == NULL) {
+							paginacion->memfisica->marcos[i].estado = LISTO;
+							paginacion->memfisica->marcos[i].proceso = proceso;
+							paginacion->memfisica->marcos[i].pagina = j++;
+						} 
+					}
+				}
+				if (libresVirtual > 0 && j < proceso->npag) {
+					for (i = 0; i < paginacion->memvirtual->tam && j < proceso->npag; i++) {
+						if (paginacion->memvirtual->marcos[i].proceso == NULL) {
+							paginacion->memvirtual->marcos[i].estado = LISTO;
+							paginacion->memvirtual->marcos[i].proceso = proceso;
+							paginacion->memvirtual->marcos[i].pagina = j++;
+						} 
+					}
+				}
+				return 1;
+			}
+		} else {
+			if (proceso != NULL) free(proceso);
+			pushbacklist(&paginacion->solicitudes, solicitud);
 		}
-		return 1;
 	}
 	return 0;
 }
 
+void imprimeTablaSolicitudes(Paginacion paginacion) {
+	IteratorList iter;
+	Solicitud* solicitud;
+	int i = 0;
+	if (estaVaciaSolicitudes(paginacion)) {
+		printf("La cola de solicitudes esta vacia.\n");
+	} else {
+		printf("Num \tTam \tUsuario \n");
+		for (iter = beginlist(paginacion.solicitudes); iter != NULL; iter = nextlist(iter)) {
+			solicitud = (Solicitud*) dataiterlist(iter); 
+			printf("%d \t%d \t%s \n", ++i, solicitud->tam, solicitud->usuario);
+		}
+	}
+}
+
+void imprimeTablaProcesos(Paginacion paginacion) {
+	IteratorList iter;
+	Proceso* proceso;
+	if (isemptylist(paginacion.procesos)) {
+		printf("La lista de procesos esta vacia.\n");
+	} else {
+		printf("Pid \tTam \tPags. \tExec \tUsuario \n");
+		for (iter = beginlist(paginacion.procesos); iter != NULL; iter = nextlist(iter)) {
+			proceso = (Proceso*) dataiterlist(iter); 
+			printf("%d \t%d \t%d \t%d \t%s \n",
+				proceso->pid,
+				proceso->tam,
+				proceso->npag,
+				proceso->xpag,
+				proceso->usuario
+			);
+		}
+	}
+}
+
+void imprimeTablaMemorias(Paginacion paginacion) {
+	int i;
+	for (i = 0; i < paginacion.memfisica->tam; i++) {
+		printf("%d %d %d\n",
+			paginacion.memfisica->marcos[i].estado,
+			paginacion.memfisica->marcos[i].proceso != NULL ? paginacion.memfisica->marcos[i].proceso->pid : 0,
+			paginacion.memfisica->marcos[i].pagina
+		);
+	}
+}
 
 
