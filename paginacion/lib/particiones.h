@@ -23,7 +23,6 @@ typedef struct {
 
 typedef struct {
 	int tscont;
-	int estado;
 } Pagina;
 
 typedef struct {

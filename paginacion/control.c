@@ -13,10 +13,9 @@
 int main() {
 
 	Paginacion paginacion;
-	inicializarPaginacion(&paginacion, 1000, 80);
+	inicializarPaginacion(&paginacion, 1000, 20);
 	
-
-	printf("\nTabla de Solicitudes\n");
+	printf("\n");
 	agregarSolicitud(&paginacion, 320, "aftab");
 	agregarSolicitud(&paginacion, 230, "hussain");
 	agregarSolicitud(&paginacion, 150, "root");
@@ -24,11 +23,11 @@ int main() {
 	agregarSolicitud(&paginacion, 490, "bar");
 	imprimeTablaSolicitudes(paginacion);
 
-	printf("\nTabla de Procesos\n");
+	printf("\n");
 	cargarSolicitud(&paginacion);
 	imprimeTablaProcesos(paginacion);
 
-	printf("\nMemorias\n");
+	printf("\n");
 	imprimeTablaMemorias(paginacion);
 
 	return 0;

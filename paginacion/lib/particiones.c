@@ -27,10 +27,8 @@ Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 			proceso = NULL;
 		} else {
 			srand(iseed);
-			for (i = 0; i < proceso->npag; i++) {
-				proceso->paginas[i].estado = LISTO;
+			for (i = 0; i < proceso->npag; i++)
 				proceso->paginas[i].tscont = (rand() % 5) + 1;
-			}
 		}
 	}
 	return proceso;
@@ -62,7 +60,7 @@ Tabla* crearTabla(int tam) {
 int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
 	int mem;
 	if (memoria > 0 && tampag > 0) {
-		mem = (memoria / tampag) + (memoria % tampag == 0 ? 0 : 1);
+		mem = memoria / tampag;
 		paginacion->cpids = 0;
 		paginacion->tampag = tampag;
 		paginacion->memfisica = crearTabla(mem);
@@ -152,14 +150,16 @@ int cargarSolicitud(Paginacion* paginacion) {
 void imprimeTablaSolicitudes(Paginacion paginacion) {
 	IteratorList iter;
 	Solicitud* solicitud;
-	int i = 0;
+	int j, i = 0;
 	if (estaVaciaSolicitudes(paginacion)) {
 		printf("La cola de solicitudes esta vacia.\n");
 	} else {
-		printf("Num \tTam \tUsuario \n");
+		printf("%-12s%-12s%-12s\n", "Numero", "Tamaño", "Usuario");
+		for (j = 0; j < 36; j++) printf("-");
+		printf("\n");
 		for (iter = beginlist(paginacion.solicitudes); iter != NULL; iter = nextlist(iter)) {
 			solicitud = (Solicitud*) dataiterlist(iter); 
-			printf("%d \t%d \t%s \n", ++i, solicitud->tam, solicitud->usuario);
+			printf("%-12d%-12d%-12s\n", ++i, solicitud->tam, solicitud->usuario);
 		}
 	}
 }
@@ -167,13 +167,16 @@ void imprimeTablaSolicitudes(Paginacion paginacion) {
 void imprimeTablaProcesos(Paginacion paginacion) {
 	IteratorList iter;
 	Proceso* proceso;
+	int i;
 	if (isemptylist(paginacion.procesos)) {
 		printf("La lista de procesos esta vacia.\n");
 	} else {
-		printf("Pid \tTam \tPags. \tExec \tUsuario \n");
+		printf("%-12s%-12s%-12s%-12s%-12s\n", "PID", "Tamaño", "Paginas", "Ejecucion", "Usuario");
+		for (i = 0; i < 60; i++) printf("-");
+		printf("\n");
 		for (iter = beginlist(paginacion.procesos); iter != NULL; iter = nextlist(iter)) {
 			proceso = (Proceso*) dataiterlist(iter); 
-			printf("%d \t%d \t%d \t%d \t%s \n",
+			printf("%-12d%-12d%-12d%-12d%-12s\n",
 				proceso->pid,
 				proceso->tam,
 				proceso->npag,
@@ -186,12 +189,53 @@ void imprimeTablaProcesos(Paginacion paginacion) {
 
 void imprimeTablaMemorias(Paginacion paginacion) {
 	int i;
+	printf("%-62s%-62s\n\n", "Memoria Física", "Memoria Virtual");
+	printf("%-10s%-10s%-10s%-10s%-10s%-10s | %-10s%-10s%-10s%-10s%-10s%-10s\n",
+		"Marco", "Estado", "Proceso", "Pagina", "Tiempo", "Usuario",
+		"Marco", "Estado", "Proceso", "Pagina", "Tiempo", "Usuario"
+	);
+	for (i = 0; i < 122; i++) printf("-");
+	printf("\n");
 	for (i = 0; i < paginacion.memfisica->tam; i++) {
-		printf("%d %d %d\n",
-			paginacion.memfisica->marcos[i].estado,
-			paginacion.memfisica->marcos[i].proceso != NULL ? paginacion.memfisica->marcos[i].proceso->pid : 0,
-			paginacion.memfisica->marcos[i].pagina
-		);
+		printf("%-10d", i);
+		switch (paginacion.memfisica->marcos[i].estado) {
+			case LISTO:     printf("%-10s", "listo");  break;
+			case ESPERA:    printf("%-10s", "espera"); break;
+			case EJECUCION: printf("%-10s", "ejec");   break;
+			case PARADA:    printf("%-10s", "parada"); break;
+			case FIN:       printf("%-10s", "fin");    break;
+			default: printf("%-10s", "libre");
+		}
+		if (paginacion.memfisica->marcos[i].proceso == NULL) {
+			printf("%-10s%-10s%-10s%-10s | ", "-", "-", "-", "-");
+		} else {
+			printf("%-10d%-10d%-10d%-10s | ",
+				paginacion.memfisica->marcos[i].proceso->pid,
+				paginacion.memfisica->marcos[i].pagina,
+				paginacion.memfisica->marcos[i].proceso->paginas[paginacion.memfisica->marcos[i].pagina].tscont,
+				paginacion.memfisica->marcos[i].proceso->usuario
+			);
+		}
+		printf("%-10d", i);
+		switch (paginacion.memvirtual->marcos[i].estado) {
+			case LISTO:     printf("%-10s", "listo");  break;
+			case ESPERA:    printf("%-10s", "espera"); break;
+			case EJECUCION: printf("%-10s", "ejec");   break;
+			case PARADA:    printf("%-10s", "parada"); break;
+			case FIN:       printf("%-10s", "fin");    break;
+			default: printf("%-10s", "libre");
+		}
+		if (paginacion.memvirtual->marcos[i].proceso == NULL) {
+			printf("%-10s%-10s%-10s%-10s", "-", "-", "-", "-");
+		} else {
+			printf("%-10d%-10d%-10d%-10s",
+				paginacion.memvirtual->marcos[i].proceso->pid,
+				paginacion.memvirtual->marcos[i].pagina,
+				paginacion.memvirtual->marcos[i].proceso->paginas[paginacion.memvirtual->marcos[i].pagina].tscont,
+				paginacion.memvirtual->marcos[i].proceso->usuario
+			);
+		}
+		printf("\n");
 	}
 }
 
