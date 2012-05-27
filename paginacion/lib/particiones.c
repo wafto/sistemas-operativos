@@ -201,7 +201,7 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 		switch (paginacion.memfisica->marcos[i].estado) {
 			case LISTO:     printf("%-10s", "listo");  break;
 			case ESPERA:    printf("%-10s", "espera"); break;
-			case EJECUCION: printf("%-10s", "ejec");   break;
+			case EJECUCION: printf("%-10s", "ejecucion");   break;
 			case PARADA:    printf("%-10s", "parada"); break;
 			case FIN:       printf("%-10s", "fin");    break;
 			default: printf("%-10s", "libre");
@@ -220,7 +220,7 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 		switch (paginacion.memvirtual->marcos[i].estado) {
 			case LISTO:     printf("%-10s", "listo");  break;
 			case ESPERA:    printf("%-10s", "espera"); break;
-			case EJECUCION: printf("%-10s", "ejec");   break;
+			case EJECUCION: printf("%-10s", "ejecucion");   break;
 			case PARADA:    printf("%-10s", "parada"); break;
 			case FIN:       printf("%-10s", "fin");    break;
 			default: printf("%-10s", "libre");
