@@ -59,15 +59,20 @@ typedef struct {
 } Tabla;
 
 typedef struct {
+	Marco* ant;
+	Marco* actual;
+	Marco* sig;
+} Meta;
+
+typedef struct {
 	List solicitudes;
 	List procesos;
 	Tabla* memfisica;
 	Tabla* memvirtual;
 	int cpids;
 	int tampag;
-	int npaganterior;
-	IteratorList anterior;
 	IteratorList actual;
+	Meta meta;
 } Paginacion;
 
 Solicitud* crearSolicitud(int, const char*);

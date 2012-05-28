@@ -69,8 +69,7 @@ int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
 		initlist(&paginacion->procesos);
 		srand((unsigned int)time(NULL));
 		paginacion->actual = NULL;
-		paginacion->anterior = NULL;
-		paginacion->npaganterior = 0;
+		paginacion->meta.ant = paginacion->meta.actual = paginacion->meta.sig = NULL;
 		return paginacion->memfisica != NULL && paginacion->memvirtual != NULL ? 1 : 0;
 	}
 	return 0;
@@ -255,6 +254,7 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 	}
 }
 
+/*
 int quantum(Paginacion* paginacion, int* err) {
 	Proceso *proceso = NULL, *anterior = NULL;
 	IteratorList iter, prev;
@@ -262,17 +262,10 @@ int quantum(Paginacion* paginacion, int* err) {
 	if (!isemptylist(paginacion->procesos)) {
 		if (paginacion->actual == NULL)
 			paginacion->actual = beginlist(paginacion->procesos);
-
-		printf("1");
 		prev = paginacion->anterior;
-		printf("2");
 		iter = paginacion->actual;
-		printf("3");
 		if (prev != NULL) anterior = (Proceso*) dataiterlist(prev);
-		printf("4");
 		if (iter != NULL) proceso  = (Proceso*) dataiterlist(iter);
-		printf("5");
-		
 		if (anterior != NULL ) {
 			if (anterior->paginas[paginacion->npaganterior].tscont <= 0) {
 				marco = anterior->paginas[paginacion->npaganterior].marco;
@@ -283,9 +276,7 @@ int quantum(Paginacion* paginacion, int* err) {
 				anterior->paginas[paginacion->npaganterior].marco->estado = ESPERA;
 			}
 		}
-		printf("6");
 		paginacion->actual = nextlist(paginacion->actual);
-		printf("7");
 		if (proceso != NULL) {
 			paginacion->anterior = iter;
 			paginacion->npaganterior = proceso->xpag;
@@ -299,9 +290,6 @@ int quantum(Paginacion* paginacion, int* err) {
 				free(proceso->paginas);
 				free(proceso);
 			}
-			
-
-			
 			return 1;
 		} else {
 			*err |= CRITICO;
@@ -311,6 +299,19 @@ int quantum(Paginacion* paginacion, int* err) {
 	}
 	return 0;
 }
+*/
 
+int quantum(Paginacion* pag, int* err) {
+	Proceso *proceso = NULL, *aux = NULL;
+	IteratorList iter;
+	if (isemptylist(pag->procesos)) {
+		*err = NO_PROCESOS;
+		return 0;
+	}
+	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
+	if (iter = pag->actual) {
+		proceso = (Proceso*) dataiterlist(iter);
+	}
 
+}
 

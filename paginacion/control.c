@@ -15,9 +15,9 @@ int main() {
 	Paginacion paginacion;
 	int err, i;
 	struct timespec tim, tim2;
+	int tiempo = 1;
    	tim.tv_sec = 0;
-   	tim.tv_nsec = 100000000;
-
+   	tim.tv_nsec = tiempo * 100000000;
 
 	inicializarPaginacion(&paginacion, 1000, 20);
 	
@@ -44,18 +44,14 @@ int main() {
 	imprimeTablaMemorias(paginacion);
 
 
-	/*
+/*	
 	for (i = 0; i < 450; i++) {
 		system("clear");
 		imprimeTablaMemorias(paginacion);
 		quantum(&paginacion, &err);
 		nanosleep(&tim , &tim2);
 	}
-	*/
-
-	for (int i = 0; i < 100; ++i) {
-		
-	}
+*/	
 	
 
 	return 0;
