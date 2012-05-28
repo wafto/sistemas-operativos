@@ -11,7 +11,6 @@ Solicitud* crearSolicitud(int tam, const char* usuario) {
 
 Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 	Proceso* proceso;
-	unsigned int iseed = (unsigned int)time(NULL);
 	int i;
 	if (pid < 0 || tam <= 0 || tampag <= 0) return NULL;
 	proceso = (Proceso*) malloc(sizeof(Proceso));
@@ -26,9 +25,10 @@ Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 			free(proceso);
 			proceso = NULL;
 		} else {
-			srand(iseed);
-			for (i = 0; i < proceso->npag; i++)
-				proceso->paginas[i].tscont = (rand() % 5) + 1;
+			for (i = 0; i < proceso->npag; i++) {
+				proceso->paginas[i].tscont = 1 + (int)(5.0 * rand() / (RAND_MAX + 1.0));
+				proceso->paginas[i].marco = NULL;
+			}
 		}
 	}
 	return proceso;
@@ -47,7 +47,7 @@ Tabla* crearTabla(int tam) {
 			} else {
 				tabla->tam = tam;
 				for (i = 0; i < tam; i++) {
-					tabla->marcos[i].estado = 0;
+					tabla->marcos[i].estado = LIBRE;
 					tabla->marcos[i].proceso = NULL;
 					tabla->marcos[i].pagina = 0;
 				}
@@ -67,6 +67,10 @@ int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
 		paginacion->memvirtual = crearTabla(mem);
 		initlist(&paginacion->solicitudes);
 		initlist(&paginacion->procesos);
+		srand((unsigned int)time(NULL));
+		paginacion->actual = NULL;
+		paginacion->anterior = NULL;
+		paginacion->npaganterior = 0;
 		return paginacion->memfisica != NULL && paginacion->memvirtual != NULL ? 1 : 0;
 	}
 	return 0;
@@ -101,10 +105,11 @@ int paginasLibres(Paginacion paginacion) {
 	return paginasLibresMemFisica(paginacion) + paginasLibresMemVirtual(paginacion);
 }
 
-int cargarSolicitud(Paginacion* paginacion) {
+int cargarSolicitud(Paginacion* paginacion, int* err) {
 	Solicitud* solicitud;
 	Proceso* proceso;
 	int i, j, libresFisica, libresVirtual;
+	*err = 0;
 	libresFisica = paginasLibresMemFisica(*paginacion);
 	libresVirtual = paginasLibresMemVirtual(*paginacion);
 	if (!estaVaciaSolicitudes(*paginacion) && (libresFisica + libresVirtual) > 0) {
@@ -115,34 +120,45 @@ int cargarSolicitud(Paginacion* paginacion) {
 			paginacion->tampag,
 			solicitud->usuario
 		);
-		if (proceso != NULL && (libresFisica + libresVirtual) >= proceso->npag) {
-			free(solicitud);
-			if (pushbacklist(&paginacion->procesos, proceso)) {
-				j = 0;
-				if (libresFisica > 0) {
-					for (i = 0; i < paginacion->memfisica->tam && j < proceso->npag; i++) {
-						if (paginacion->memfisica->marcos[i].proceso == NULL) {
-							paginacion->memfisica->marcos[i].estado = LISTO;
-							paginacion->memfisica->marcos[i].proceso = proceso;
-							paginacion->memfisica->marcos[i].pagina = j++;
-						} 
+		if (proceso != NULL) {
+			if ((libresFisica + libresVirtual) >= proceso->npag) {
+				free(solicitud);
+				if (pushbacklist(&paginacion->procesos, proceso)) {
+					j = 0;
+					if (libresFisica > 0) {
+						for (i = 0; i < paginacion->memfisica->tam && j < proceso->npag; i++) {
+							if (paginacion->memfisica->marcos[i].proceso == NULL) {
+								paginacion->memfisica->marcos[i].estado = LISTO;
+								paginacion->memfisica->marcos[i].proceso = proceso;
+								paginacion->memfisica->marcos[i].pagina = j;
+								proceso->paginas[j].marco = &(paginacion->memfisica->marcos[i]);
+								j++;
+							} 
+						}
 					}
-				}
-				if (libresVirtual > 0 && j < proceso->npag) {
-					for (i = 0; i < paginacion->memvirtual->tam && j < proceso->npag; i++) {
-						if (paginacion->memvirtual->marcos[i].proceso == NULL) {
-							paginacion->memvirtual->marcos[i].estado = LISTO;
-							paginacion->memvirtual->marcos[i].proceso = proceso;
-							paginacion->memvirtual->marcos[i].pagina = j++;
-						} 
+					if (libresVirtual > 0 && j < proceso->npag) {
+						for (i = 0; i < paginacion->memvirtual->tam && j < proceso->npag; i++) {
+							if (paginacion->memvirtual->marcos[i].proceso == NULL) {
+								paginacion->memvirtual->marcos[i].estado = LISTO;
+								paginacion->memvirtual->marcos[i].proceso = proceso;
+								paginacion->memvirtual->marcos[i].pagina = j;
+								proceso->paginas[j].marco = &(paginacion->memvirtual->marcos[i]);
+								j++;
+							} 
+						}
 					}
+					return 1;
 				}
-				return 1;
+			} else {
+				if (proceso != NULL) free(proceso);
+				pushbacklist(&paginacion->solicitudes, solicitud);
+				*err |= NO_MEMORIA;
 			}
 		} else {
-			if (proceso != NULL) free(proceso);
-			pushbacklist(&paginacion->solicitudes, solicitud);
+			*err |= NO_MALLOC;
 		}
+	} else {
+		*err |= NO_SOLICITUDES;
 	}
 	return 0;
 }
@@ -199,11 +215,11 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 	for (i = 0; i < paginacion.memfisica->tam; i++) {
 		printf("%-10d", i);
 		switch (paginacion.memfisica->marcos[i].estado) {
-			case LISTO:     printf("%-10s", "listo");  break;
-			case ESPERA:    printf("%-10s", "espera"); break;
-			case EJECUCION: printf("%-10s", "ejecucion");   break;
-			case PARADA:    printf("%-10s", "parada"); break;
-			case FIN:       printf("%-10s", "fin");    break;
+			case LISTO:     printf("%-10s", "listo");     break;
+			case ESPERA:    printf("%-10s", "espera");    break;
+			case EJECUCION: printf("%-10s", "ejecucion"); break;
+			case PARADA:    printf("%-10s", "parada");    break;
+			case FIN:       printf("%-10s", "fin");       break;
 			default: printf("%-10s", "libre");
 		}
 		if (paginacion.memfisica->marcos[i].proceso == NULL) {
@@ -218,11 +234,11 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 		}
 		printf("%-10d", i);
 		switch (paginacion.memvirtual->marcos[i].estado) {
-			case LISTO:     printf("%-10s", "listo");  break;
-			case ESPERA:    printf("%-10s", "espera"); break;
-			case EJECUCION: printf("%-10s", "ejecucion");   break;
-			case PARADA:    printf("%-10s", "parada"); break;
-			case FIN:       printf("%-10s", "fin");    break;
+			case LISTO:     printf("%-10s", "listo");     break;
+			case ESPERA:    printf("%-10s", "espera");    break;
+			case EJECUCION: printf("%-10s", "ejecucion"); break;
+			case PARADA:    printf("%-10s", "parada");    break;
+			case FIN:       printf("%-10s", "fin");       break;
 			default: printf("%-10s", "libre");
 		}
 		if (paginacion.memvirtual->marcos[i].proceso == NULL) {
@@ -238,5 +254,63 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 		printf("\n");
 	}
 }
+
+int quantum(Paginacion* paginacion, int* err) {
+	Proceso *proceso = NULL, *anterior = NULL;
+	IteratorList iter, prev;
+	Marco* marco;
+	if (!isemptylist(paginacion->procesos)) {
+		if (paginacion->actual == NULL)
+			paginacion->actual = beginlist(paginacion->procesos);
+
+		printf("1");
+		prev = paginacion->anterior;
+		printf("2");
+		iter = paginacion->actual;
+		printf("3");
+		if (prev != NULL) anterior = (Proceso*) dataiterlist(prev);
+		printf("4");
+		if (iter != NULL) proceso  = (Proceso*) dataiterlist(iter);
+		printf("5");
+		
+		if (anterior != NULL ) {
+			if (anterior->paginas[paginacion->npaganterior].tscont <= 0) {
+				marco = anterior->paginas[paginacion->npaganterior].marco;
+				marco->estado = LIBRE;
+				marco->proceso = NULL;
+				marco->pagina = 0;
+			} else {
+				anterior->paginas[paginacion->npaganterior].marco->estado = ESPERA;
+			}
+		}
+		printf("6");
+		paginacion->actual = nextlist(paginacion->actual);
+		printf("7");
+		if (proceso != NULL) {
+			paginacion->anterior = iter;
+			paginacion->npaganterior = proceso->xpag;
+			proceso->paginas[proceso->xpag].marco->estado = EJECUCION;
+			proceso->paginas[proceso->xpag].tscont -= 1;
+			if (proceso->paginas[proceso->xpag].tscont <= 0) {
+				proceso->xpag += 1;
+			}
+			if (proceso->xpag >= proceso->npag) {
+				proceso = (Proceso*) popiterlist(&paginacion->procesos, iter);
+				free(proceso->paginas);
+				free(proceso);
+			}
+			
+
+			
+			return 1;
+		} else {
+			*err |= CRITICO;
+		}
+	} else {
+		*err |= NO_PROCESOS;
+	}
+	return 0;
+}
+
 
 
