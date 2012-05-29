@@ -266,13 +266,14 @@ int quantum(Paginacion* pag, int* err) {
 	if (iter = pag->actual)
 		proceso = (Proceso*) dataiterlist(iter);
 	if (proceso != NULL) {
-		if (pag->meta.ant != NULL) {
+		if (pag->meta.ant != NULL && pag->meta.ant->proceso != NULL) {
 			if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
 				pag->meta.ant->estado = LIBRE;
 				pag->meta.ant->proceso = NULL;
-			}
-			else
+				pag->meta.ant->pagina = 0;
+			} else {
 				pag->meta.ant->estado = ESPERA;
+			}
 		}
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
@@ -282,6 +283,9 @@ int quantum(Paginacion* pag, int* err) {
 			proceso->xpag += 1;
 		if (proceso->xpag >= proceso->npag) {
 			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
+			proceso->paginas[proceso->npag - 1].marco->estado = LIBRE;
+			proceso->paginas[proceso->npag - 1].marco->proceso = NULL;
+			proceso->paginas[proceso->npag - 1].marco->pagina = 0;
 			free(proceso->paginas);
 			free(proceso);
 		}

@@ -45,13 +45,8 @@ int main() {
 		quantum(&paginacion, &err);
 		printf("%d\n", i);
 		if (err == NO_PROCESOS) break;
-		if ( i > 90 && i < 100)
-			sleep(3);
 		nanosleep(&tim , &tim2);
 	}
 	
-	
-if ( i > 100 && i < 150)
-	sleep(3);
 	return 0;
 }
