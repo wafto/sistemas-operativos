@@ -39,19 +39,14 @@ int main() {
 	cargarSolicitud(&paginacion, &err);
 	imprimeTablaProcesos(paginacion);
 
-	
-	printf("\n");
-	imprimeTablaMemorias(paginacion);
-
-
-/*	
 	for (i = 0; i < 450; i++) {
 		system("clear");
 		imprimeTablaMemorias(paginacion);
 		quantum(&paginacion, &err);
+		if (err == NO_PROCESOS) break;
 		nanosleep(&tim , &tim2);
 	}
-*/	
+	
 	
 
 	return 0;

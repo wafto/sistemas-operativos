@@ -254,53 +254,6 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 	}
 }
 
-/*
-int quantum(Paginacion* paginacion, int* err) {
-	Proceso *proceso = NULL, *anterior = NULL;
-	IteratorList iter, prev;
-	Marco* marco;
-	if (!isemptylist(paginacion->procesos)) {
-		if (paginacion->actual == NULL)
-			paginacion->actual = beginlist(paginacion->procesos);
-		prev = paginacion->anterior;
-		iter = paginacion->actual;
-		if (prev != NULL) anterior = (Proceso*) dataiterlist(prev);
-		if (iter != NULL) proceso  = (Proceso*) dataiterlist(iter);
-		if (anterior != NULL ) {
-			if (anterior->paginas[paginacion->npaganterior].tscont <= 0) {
-				marco = anterior->paginas[paginacion->npaganterior].marco;
-				marco->estado = LIBRE;
-				marco->proceso = NULL;
-				marco->pagina = 0;
-			} else {
-				anterior->paginas[paginacion->npaganterior].marco->estado = ESPERA;
-			}
-		}
-		paginacion->actual = nextlist(paginacion->actual);
-		if (proceso != NULL) {
-			paginacion->anterior = iter;
-			paginacion->npaganterior = proceso->xpag;
-			proceso->paginas[proceso->xpag].marco->estado = EJECUCION;
-			proceso->paginas[proceso->xpag].tscont -= 1;
-			if (proceso->paginas[proceso->xpag].tscont <= 0) {
-				proceso->xpag += 1;
-			}
-			if (proceso->xpag >= proceso->npag) {
-				proceso = (Proceso*) popiterlist(&paginacion->procesos, iter);
-				free(proceso->paginas);
-				free(proceso);
-			}
-			return 1;
-		} else {
-			*err |= CRITICO;
-		}
-	} else {
-		*err |= NO_PROCESOS;
-	}
-	return 0;
-}
-*/
-
 int quantum(Paginacion* pag, int* err) {
 	Proceso *proceso = NULL, *aux = NULL;
 	IteratorList iter;
@@ -309,9 +262,40 @@ int quantum(Paginacion* pag, int* err) {
 		return 0;
 	}
 	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
-	if (iter = pag->actual) {
+	if (iter = pag->actual)
 		proceso = (Proceso*) dataiterlist(iter);
+	if (proceso != NULL) {
+		if (pag->meta.ant != NULL) {
+			if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
+				pag->meta.ant->estado = LIBRE;
+				pag->meta.ant->proceso = NULL;
+				pag->meta.ant->pagina = 0;
+			} else {
+				pag->meta.ant->estado = ESPERA;
+			}
+		}
+		pag->actual = nextlist(pag->actual);
+		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
+		pag->meta.actual->estado = EJECUCION;
+		proceso->paginas[proceso->xpag].tscont -= 1;
+		if (proceso->paginas[proceso->xpag].tscont <= 0)
+			proceso->xpag += 1;
+		if (proceso->xpag >= proceso->npag) {
+			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
+			free(proceso->paginas);
+			free(proceso);
+		}
+		pag->meta.ant = pag->meta.actual;
+		aux = (Proceso*) dataiterlist(pag->actual);
+		pag->meta.sig = (aux != NULL) ? aux->paginas[aux->xpag].marco : NULL;
+		if (pag->meta.sig == NULL && isemptylist(pag->procesos)) {
+			pag->meta.actual->estado = LIBRE;
+			pag->meta.actual->proceso = NULL;
+			pag->meta.actual->pagina = 0;
+		}
+		return 1;
 	}
-
+	*err = CRITICO;
+	return 0;
 }
 
