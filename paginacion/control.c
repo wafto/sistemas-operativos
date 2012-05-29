@@ -22,9 +22,9 @@ int main() {
 	inicializarPaginacion(&paginacion, 1000, 20);
 	
 	printf("\n");
-	agregarSolicitud(&paginacion, 320, "aftab");
+	agregarSolicitud(&paginacion, 120, "aftab");
 	agregarSolicitud(&paginacion, 230, "hussain");
-	agregarSolicitud(&paginacion, 150, "saass");
+	agregarSolicitud(&paginacion, 250, "saass");
 	agregarSolicitud(&paginacion, 570, "foo");
 	agregarSolicitud(&paginacion, 490, "bar");
 	agregarSolicitud(&paginacion, 440, "tazuu");
@@ -45,13 +45,13 @@ int main() {
 		quantum(&paginacion, &err);
 		printf("%d\n", i);
 		if (err == NO_PROCESOS) break;
-		if (i > 95 && i < 130)
-			sleep(1);
-		else
-			nanosleep(&tim , &tim2);
+		if ( i > 90 && i < 100)
+			sleep(3);
+		nanosleep(&tim , &tim2);
 	}
 	
 	
-
+if ( i > 100 && i < 150)
+	sleep(3);
 	return 0;
 }

@@ -126,7 +126,7 @@ int cargarSolicitud(Paginacion* paginacion, int* err) {
 					j = 0;
 					if (libresFisica > 0) {
 						for (i = 0; i < paginacion->memfisica->tam && j < proceso->npag; i++) {
-							if (paginacion->memfisica->marcos[i].proceso == NULL) {
+							if (paginacion->memfisica->marcos[i].estado == LIBRE) {
 								paginacion->memfisica->marcos[i].estado = LISTO;
 								paginacion->memfisica->marcos[i].proceso = proceso;
 								paginacion->memfisica->marcos[i].pagina = j;
@@ -137,7 +137,7 @@ int cargarSolicitud(Paginacion* paginacion, int* err) {
 					}
 					if (libresVirtual > 0 && j < proceso->npag) {
 						for (i = 0; i < paginacion->memvirtual->tam && j < proceso->npag; i++) {
-							if (paginacion->memvirtual->marcos[i].proceso == NULL) {
+							if (paginacion->memvirtual->marcos[i].estado == LIBRE) {
 								paginacion->memvirtual->marcos[i].estado = LISTO;
 								paginacion->memvirtual->marcos[i].proceso = proceso;
 								paginacion->memvirtual->marcos[i].pagina = j;
@@ -266,15 +266,13 @@ int quantum(Paginacion* pag, int* err) {
 	if (iter = pag->actual)
 		proceso = (Proceso*) dataiterlist(iter);
 	if (proceso != NULL) {
-		printf("Proceso: %d, pagina: %d, Usuario: (%ld) %s\n", proceso->pid, proceso->xpag, strlen(proceso->usuario), proceso->usuario);
 		if (pag->meta.ant != NULL) {
 			if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
 				pag->meta.ant->estado = LIBRE;
 				pag->meta.ant->proceso = NULL;
-				pag->meta.ant->pagina = 0;
-			} else {
-				pag->meta.ant->estado = ESPERA;
 			}
+			else
+				pag->meta.ant->estado = ESPERA;
 		}
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
@@ -282,7 +280,6 @@ int quantum(Paginacion* pag, int* err) {
 		proceso->paginas[proceso->xpag].tscont -= 1;
 		if (proceso->paginas[proceso->xpag].tscont <= 0)
 			proceso->xpag += 1;
-		printf("Proceso: %d, pagina: %d, Usuario: (%ld) %s\n", proceso->pid, proceso->xpag, strlen(proceso->usuario), proceso->usuario);
 		if (proceso->xpag >= proceso->npag) {
 			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
 			free(proceso->paginas);
