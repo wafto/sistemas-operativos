@@ -204,7 +204,7 @@ void imprimeTablaProcesos(Paginacion paginacion) {
 
 void imprimeTablaMemorias(Paginacion paginacion) {
 	int i;
-	printf("%-62s%-62s\n\n", "Memoria Física", "Memoria Virtual");
+	printf("%-62s%s\n\n", "Memoria Física", "Memoria Virtual");
 	printf("%-10s%-10s%-10s%-10s%-10s%-10s | %-10s%-10s%-10s%-10s%-10s%-10s\n",
 		"Marco", "Estado", "Proceso", "Pagina", "Tiempo", "Usuario",
 		"Marco", "Estado", "Proceso", "Pagina", "Tiempo", "Usuario"
@@ -257,14 +257,16 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 int quantum(Paginacion* pag, int* err) {
 	Proceso *proceso = NULL, *aux = NULL;
 	IteratorList iter;
+	*err = 0;
 	if (isemptylist(pag->procesos)) {
-		*err = NO_PROCESOS;
+		*err |= NO_PROCESOS;
 		return 0;
 	}
 	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
 	if (iter = pag->actual)
 		proceso = (Proceso*) dataiterlist(iter);
 	if (proceso != NULL) {
+		printf("Proceso: %d, pagina: %d, Usuario: (%ld) %s\n", proceso->pid, proceso->xpag, strlen(proceso->usuario), proceso->usuario);
 		if (pag->meta.ant != NULL) {
 			if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
 				pag->meta.ant->estado = LIBRE;
@@ -280,6 +282,7 @@ int quantum(Paginacion* pag, int* err) {
 		proceso->paginas[proceso->xpag].tscont -= 1;
 		if (proceso->paginas[proceso->xpag].tscont <= 0)
 			proceso->xpag += 1;
+		printf("Proceso: %d, pagina: %d, Usuario: (%ld) %s\n", proceso->pid, proceso->xpag, strlen(proceso->usuario), proceso->usuario);
 		if (proceso->xpag >= proceso->npag) {
 			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
 			free(proceso->paginas);
@@ -295,7 +298,7 @@ int quantum(Paginacion* pag, int* err) {
 		}
 		return 1;
 	}
-	*err = CRITICO;
+	*err |= CRITICO;
 	return 0;
 }
 

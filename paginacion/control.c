@@ -24,7 +24,7 @@ int main() {
 	printf("\n");
 	agregarSolicitud(&paginacion, 320, "aftab");
 	agregarSolicitud(&paginacion, 230, "hussain");
-	agregarSolicitud(&paginacion, 150, "root");
+	agregarSolicitud(&paginacion, 150, "saass");
 	agregarSolicitud(&paginacion, 570, "foo");
 	agregarSolicitud(&paginacion, 490, "bar");
 	agregarSolicitud(&paginacion, 440, "tazuu");
@@ -43,8 +43,12 @@ int main() {
 		system("clear");
 		imprimeTablaMemorias(paginacion);
 		quantum(&paginacion, &err);
+		printf("%d\n", i);
 		if (err == NO_PROCESOS) break;
-		nanosleep(&tim , &tim2);
+		if (i > 95 && i < 130)
+			sleep(1);
+		else
+			nanosleep(&tim , &tim2);
 	}
 	
 	
