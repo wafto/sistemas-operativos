@@ -297,9 +297,9 @@ int quantum(Paginacion* pag, int* err) {
 			pag->memfisica->marcos[i].proceso = marco->proceso;
 			pag->memfisica->marcos[i].pagina = marco->pagina;
 			proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
-			marco->estado = bandera ? LIBRE : estado;
-			marco->proceso = bandera ? NULL : aux;
-			marco->pagina = bandera ? 0 : pagina;
+			marco->estado = estado;
+			marco->proceso = aux;
+			marco->pagina = pagina;
 			if (!bandera)
 				marco->proceso->paginas[pagina].marco = marco;
 			pag->meta.actual = proceso->paginas[proceso->xpag].marco;		
