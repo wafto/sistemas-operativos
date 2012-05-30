@@ -259,8 +259,8 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 int quantum(Paginacion* pag, int* err) {
 	Proceso *proceso = NULL, *aux = NULL;
 	IteratorList iter;
-	Marco* marco;
-	int i, bandera;
+	Marco *marco;
+	int i, estado, pagina, bandera;
 	*err = 0;
 	if (isemptylist(pag->procesos)) {
 		*err |= NO_PROCESOS;
@@ -287,19 +287,21 @@ int quantum(Paginacion* pag, int* err) {
 		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
 			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++)
 				if (pag->memfisica->marcos[i].estado == LIBRE) { bandera = 1; break; }
-			if (!bandera) i = pag->meta.actual->indice;
+			if (!bandera)
+				i = pag->meta.actual->indice;
+			aux = pag->memfisica->marcos[i].proceso;
+			estado = pag->memfisica->marcos[i].estado;
+			pagina = pag->memfisica->marcos[i].pagina;
 			marco = proceso->paginas[proceso->xpag].marco;
 			pag->memfisica->marcos[i].estado = marco->estado;
 			pag->memfisica->marcos[i].proceso = marco->proceso;
 			pag->memfisica->marcos[i].pagina = marco->pagina;
 			proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
-			if (bandera) {
-				marco->estado = LIBRE;
-				marco->proceso = NULL;
-				marco->pagina = 0;
-			} else {
-				/* Modificacion con el otro marco */
-			}
+			marco->estado = bandera ? LIBRE : estado;
+			marco->proceso = bandera ? NULL : aux;
+			marco->pagina = bandera ? 0 : pagina;
+			if (!bandera)
+				marco->proceso->paginas[pagina].marco = marco;
 			pag->meta.actual = proceso->paginas[proceso->xpag].marco;		
 		}
 		pag->actual = nextlist(pag->actual);

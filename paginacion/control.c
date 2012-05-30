@@ -33,7 +33,7 @@ int main() {
 	agregarSolicitud(&paginacion, 150, "flemx");
 	agregarSolicitud(&paginacion, 170, "lorem");
 	agregarSolicitud(&paginacion, 190, "ipsum");
-	agregarSolicitud(&paginacion, 240, "lol");
+	agregarSolicitud(&paginacion, 220, "lol");
 	imprimeTablaSolicitudes(paginacion);
 
 	printf("\n");
