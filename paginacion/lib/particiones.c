@@ -34,7 +34,7 @@ Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 	return proceso;
 }
 
-Tabla* crearTabla(int tam) {
+Tabla* crearTabla(int tam, int tipo) {
 	Tabla* tabla = NULL;
 	int i;
 	if (tam > 0) {
@@ -47,6 +47,7 @@ Tabla* crearTabla(int tam) {
 			} else {
 				tabla->tam = tam;
 				for (i = 0; i < tam; i++) {
+					tabla->marcos[i].tipo = tipo;
 					tabla->marcos[i].estado = LIBRE;
 					tabla->marcos[i].proceso = NULL;
 					tabla->marcos[i].pagina = 0;
@@ -63,13 +64,13 @@ int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
 		mem = memoria / tampag;
 		paginacion->cpids = 0;
 		paginacion->tampag = tampag;
-		paginacion->memfisica = crearTabla(mem);
-		paginacion->memvirtual = crearTabla(mem);
+		paginacion->memfisica = crearTabla(mem, MEM_FISICA);
+		paginacion->memvirtual = crearTabla(mem, MEM_VIRTUAL);
 		initlist(&paginacion->solicitudes);
 		initlist(&paginacion->procesos);
 		srand((unsigned int)time(NULL));
 		paginacion->actual = NULL;
-		paginacion->meta.ant = paginacion->meta.actual = paginacion->meta.sig = NULL;
+		paginacion->meta.ant = paginacion->meta.actual = NULL;
 		return paginacion->memfisica != NULL && paginacion->memvirtual != NULL ? 1 : 0;
 	}
 	return 0;
@@ -257,6 +258,8 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 int quantum(Paginacion* pag, int* err) {
 	Proceso *proceso = NULL, *aux = NULL;
 	IteratorList iter;
+	Marco* marco;
+	int i, bandera;
 	*err = 0;
 	if (isemptylist(pag->procesos)) {
 		*err |= NO_PROCESOS;
@@ -277,6 +280,28 @@ int quantum(Paginacion* pag, int* err) {
 		}
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
+
+		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
+			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++) {
+				if (pag->memfisica->marcos[i].estado == LIBRE) {
+					pag->memfisica->marcos[i].proceso = pag->meta.actual->proceso;
+					pag->memfisica->marcos[i].pagina = pag->meta.actual->pagina;
+					proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
+					pag->meta.actual->estado = LIBRE;
+					pag->meta.actual->proceso = NULL;
+					pag->meta.actual->pagina = 0;
+					pag->meta.actual = proceso->paginas[proceso->xpag].marco;
+					bandera = 1;
+					break;
+				}
+			}
+			if (!bandera) {
+
+				
+				
+			}
+		}
+
 		pag->meta.actual->estado = EJECUCION;
 		proceso->paginas[proceso->xpag].tscont -= 1;
 		if (proceso->paginas[proceso->xpag].tscont <= 0)
@@ -291,8 +316,8 @@ int quantum(Paginacion* pag, int* err) {
 		}
 		pag->meta.ant = pag->meta.actual;
 		aux = (Proceso*) dataiterlist(pag->actual);
-		pag->meta.sig = (aux != NULL) ? aux->paginas[aux->xpag].marco : NULL;
-		if (pag->meta.sig == NULL && isemptylist(pag->procesos)) {
+		marco = aux != NULL ? aux->paginas[aux->xpag].marco : NULL;
+		if (marco == NULL && isemptylist(pag->procesos)) {
 			pag->meta.actual->estado = LIBRE;
 			pag->meta.actual->proceso = NULL;
 			pag->meta.actual->pagina = 0;

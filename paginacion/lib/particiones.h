@@ -7,7 +7,7 @@
 #include <time.h>
 #include "../../util/list.h"
 
-#define MAXSTR    32
+#define MAXSTR    16
 
 /* Estados */
 #define LIBRE     0
@@ -25,6 +25,10 @@
 #define PAGINA_FUERA     16
 #define TSCONT_INVALIDO  32
 #define CRITICO          64
+
+/* Tipos de Memorias */
+#define MEM_FISICA  1
+#define MEM_VIRTUAL 2
 
 typedef struct {
 	int tam;
@@ -51,6 +55,7 @@ typedef struct Marco {
 	int estado;
 	Proceso* proceso;
 	int pagina;
+	int tipo;
 } Marco;
 
 typedef struct {
@@ -61,7 +66,6 @@ typedef struct {
 typedef struct {
 	Marco* ant;
 	Marco* actual;
-	Marco* sig;
 } Meta;
 
 typedef struct {
@@ -77,7 +81,7 @@ typedef struct {
 
 Solicitud* crearSolicitud(int, const char*);
 Proceso* crearProceso(int, int, int, const char*);
-Tabla* crearTabla(int);
+Tabla* crearTabla(int, int);
 int inicializarPaginacion(Paginacion*, int, int);
 int estaVaciaSolicitudes(Paginacion);
 int agregarSolicitud(Paginacion*, int, const char*);

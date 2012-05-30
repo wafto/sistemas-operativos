@@ -24,9 +24,9 @@ int main() {
 	printf("\n");
 	agregarSolicitud(&paginacion, 120, "aftab");
 	agregarSolicitud(&paginacion, 230, "hussain");
-	agregarSolicitud(&paginacion, 250, "saass");
+	agregarSolicitud(&paginacion, 150, "saass");
 	agregarSolicitud(&paginacion, 570, "foo");
-	agregarSolicitud(&paginacion, 490, "bar");
+	agregarSolicitud(&paginacion, 690, "bar");
 	agregarSolicitud(&paginacion, 440, "tazuu");
 	imprimeTablaSolicitudes(paginacion);
 
