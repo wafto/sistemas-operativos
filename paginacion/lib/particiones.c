@@ -151,7 +151,7 @@ int cargarSolicitud(Paginacion* paginacion, int* err) {
 					return 1;
 				}
 			} else {
-				if (proceso != NULL) free(proceso);
+				if (proceso != NULL) { free(proceso->paginas); free(proceso); }
 				pushbacklist(&paginacion->solicitudes, solicitud);
 				*err |= NO_MEMORIA;
 			}
@@ -285,12 +285,8 @@ int quantum(Paginacion* pag, int* err) {
 		}
 		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
 		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
-			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++) {
-				if (pag->memfisica->marcos[i].estado == LIBRE) {
-					bandera = 1;
-					break;
-				}
-			}
+			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++)
+				if (pag->memfisica->marcos[i].estado == LIBRE) { bandera = 1; break; }
 			if (!bandera) i = pag->meta.actual->indice;
 			marco = proceso->paginas[proceso->xpag].marco;
 			pag->memfisica->marcos[i].estado = marco->estado;
@@ -305,8 +301,7 @@ int quantum(Paginacion* pag, int* err) {
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual->estado = EJECUCION;
 		proceso->paginas[proceso->xpag].tscont -= 1;
-		if (proceso->paginas[proceso->xpag].tscont <= 0)
-			proceso->xpag += 1;
+		if (proceso->paginas[proceso->xpag].tscont <= 0) proceso->xpag += 1;
 		if (proceso->xpag >= proceso->npag) {
 			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
 			proceso->paginas[proceso->npag - 1].marco->estado = LIBRE;
@@ -315,7 +310,6 @@ int quantum(Paginacion* pag, int* err) {
 			free(proceso->paginas);
 			free(proceso);
 		}
-
 		aux = (Proceso*) dataiterlist(pag->actual);
 		marco = aux != NULL ? aux->paginas[aux->xpag].marco : NULL;
 		if (marco == NULL && isemptylist(pag->procesos)) {
