@@ -22,15 +22,27 @@ int main() {
 	inicializarPaginacion(&paginacion, 1000, 20);
 	
 	printf("\n");
-	agregarSolicitud(&paginacion, 120, "aftab");
-	agregarSolicitud(&paginacion, 230, "hussain");
-	agregarSolicitud(&paginacion, 150, "saass");
-	agregarSolicitud(&paginacion, 570, "foo");
-	agregarSolicitud(&paginacion, 690, "bar");
-	agregarSolicitud(&paginacion, 440, "tazuu");
+	agregarSolicitud(&paginacion, 60, "aftab");
+	agregarSolicitud(&paginacion, 130, "hussain");
+	agregarSolicitud(&paginacion, 120, "saass");
+	agregarSolicitud(&paginacion, 270, "foo");
+	agregarSolicitud(&paginacion, 140, "bar");
+	agregarSolicitud(&paginacion, 240, "tazuu");
+	agregarSolicitud(&paginacion, 120, "batfa");
+	agregarSolicitud(&paginacion, 130, "miranda");
+	agregarSolicitud(&paginacion, 150, "flemx");
+	agregarSolicitud(&paginacion, 170, "lorem");
+	agregarSolicitud(&paginacion, 190, "ipsum");
+	agregarSolicitud(&paginacion, 240, "lol");
 	imprimeTablaSolicitudes(paginacion);
 
 	printf("\n");
+	cargarSolicitud(&paginacion, &err);
+	cargarSolicitud(&paginacion, &err);
+	cargarSolicitud(&paginacion, &err);
+	cargarSolicitud(&paginacion, &err);
+	cargarSolicitud(&paginacion, &err);
+	cargarSolicitud(&paginacion, &err);
 	cargarSolicitud(&paginacion, &err);
 	cargarSolicitud(&paginacion, &err);
 	cargarSolicitud(&paginacion, &err);

@@ -56,6 +56,7 @@ typedef struct Marco {
 	Proceso* proceso;
 	int pagina;
 	int tipo;
+	int indice;
 } Marco;
 
 typedef struct {

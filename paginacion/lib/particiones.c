@@ -47,6 +47,7 @@ Tabla* crearTabla(int tam, int tipo) {
 			} else {
 				tabla->tam = tam;
 				for (i = 0; i < tam; i++) {
+					tabla->marcos[i].indice = i;
 					tabla->marcos[i].tipo = tipo;
 					tabla->marcos[i].estado = LIBRE;
 					tabla->marcos[i].proceso = NULL;
@@ -280,28 +281,22 @@ int quantum(Paginacion* pag, int* err) {
 		}
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
-
 		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
 			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++) {
 				if (pag->memfisica->marcos[i].estado == LIBRE) {
-					pag->memfisica->marcos[i].proceso = pag->meta.actual->proceso;
-					pag->memfisica->marcos[i].pagina = pag->meta.actual->pagina;
-					proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
-					pag->meta.actual->estado = LIBRE;
-					pag->meta.actual->proceso = NULL;
-					pag->meta.actual->pagina = 0;
-					pag->meta.actual = proceso->paginas[proceso->xpag].marco;
 					bandera = 1;
 					break;
 				}
 			}
-			if (!bandera) {
-
-				
-				
-			}
+			if (!bandera) i = pag->meta.actual->indice;
+			pag->memfisica->marcos[i].proceso = pag->meta.actual->proceso;
+			pag->memfisica->marcos[i].pagina = pag->meta.actual->pagina;
+			proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
+			pag->meta.actual->estado = LIBRE;
+			pag->meta.actual->proceso = NULL;
+			pag->meta.actual->pagina = 0;
+			pag->meta.actual = proceso->paginas[proceso->xpag].marco;
 		}
-
 		pag->meta.actual->estado = EJECUCION;
 		proceso->paginas[proceso->xpag].tscont -= 1;
 		if (proceso->paginas[proceso->xpag].tscont <= 0)
