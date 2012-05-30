@@ -267,19 +267,22 @@ int quantum(Paginacion* pag, int* err) {
 		return 0;
 	}
 	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
-	if (iter = pag->actual)
-		proceso = (Proceso*) dataiterlist(iter);
+	if (iter = pag->actual) proceso = (Proceso*) dataiterlist(iter);
 	if (proceso != NULL) {
-		if (pag->meta.ant != NULL && pag->meta.ant->proceso != NULL) {
-			if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
-				pag->meta.ant->estado = LIBRE;
-				pag->meta.ant->proceso = NULL;
-				pag->meta.ant->pagina = 0;
+		if (pag->meta.ant != NULL) {
+			if (pag->meta.ant->proceso != NULL) {
+				if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
+					pag->meta.ant->estado = LIBRE;
+					pag->meta.ant->proceso = NULL;
+					pag->meta.ant->pagina = 0;
+				} else {
+					pag->meta.ant->estado = ESPERA;
+				}
 			} else {
-				pag->meta.ant->estado = ESPERA;
+				pag->meta.ant->estado = LIBRE;
+				pag->meta.ant->pagina = 0;
 			}
 		}
-		pag->actual = nextlist(pag->actual);
 		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
 		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
 			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++) {
@@ -289,14 +292,17 @@ int quantum(Paginacion* pag, int* err) {
 				}
 			}
 			if (!bandera) i = pag->meta.actual->indice;
-			pag->memfisica->marcos[i].proceso = pag->meta.actual->proceso;
-			pag->memfisica->marcos[i].pagina = pag->meta.actual->pagina;
+			marco = proceso->paginas[proceso->xpag].marco;
+			pag->memfisica->marcos[i].estado = marco->estado;
+			pag->memfisica->marcos[i].proceso = marco->proceso;
+			pag->memfisica->marcos[i].pagina = marco->pagina;
 			proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
-			pag->meta.actual->estado = LIBRE;
-			pag->meta.actual->proceso = NULL;
-			pag->meta.actual->pagina = 0;
-			pag->meta.actual = proceso->paginas[proceso->xpag].marco;
+			marco->estado = LIBRE;
+			marco->proceso = NULL;
+			marco->pagina = 0;
+			pag->meta.actual = proceso->paginas[proceso->xpag].marco;		
 		}
+		pag->actual = nextlist(pag->actual);
 		pag->meta.actual->estado = EJECUCION;
 		proceso->paginas[proceso->xpag].tscont -= 1;
 		if (proceso->paginas[proceso->xpag].tscont <= 0)
@@ -309,7 +315,7 @@ int quantum(Paginacion* pag, int* err) {
 			free(proceso->paginas);
 			free(proceso);
 		}
-		pag->meta.ant = pag->meta.actual;
+
 		aux = (Proceso*) dataiterlist(pag->actual);
 		marco = aux != NULL ? aux->paginas[aux->xpag].marco : NULL;
 		if (marco == NULL && isemptylist(pag->procesos)) {
@@ -317,6 +323,7 @@ int quantum(Paginacion* pag, int* err) {
 			pag->meta.actual->proceso = NULL;
 			pag->meta.actual->pagina = 0;
 		}
+		pag->meta.ant = pag->meta.actual;
 		return 1;
 	}
 	*err |= CRITICO;
