@@ -1,2 +1,2 @@
 apps:
-	gcc control.c lib/particiones.c ../util/list.c -o ~/Desktop/control
+	gcc memoria.c lib/particiones.c lib/comun.c ../util/list.c -o ~/Desktop/memoria

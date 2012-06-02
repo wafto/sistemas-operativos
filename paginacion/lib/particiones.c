@@ -115,15 +115,11 @@ int cargarSolicitud(Paginacion* paginacion, int* err) {
 	libresVirtual = paginasLibresMemVirtual(*paginacion);
 	if (!estaVaciaSolicitudes(*paginacion) && (libresFisica + libresVirtual) > 0) {
 		solicitud = (Solicitud*) popfrontlist(&paginacion->solicitudes);
-		proceso = crearProceso(
-			++paginacion->cpids,
-			solicitud->tam,
-			paginacion->tampag,
-			solicitud->usuario
-		);
+		proceso = crearProceso(0, solicitud->tam, paginacion->tampag, solicitud->usuario);
 		if (proceso != NULL) {
 			if ((libresFisica + libresVirtual) >= proceso->npag) {
 				free(solicitud);
+				proceso->pid = ++paginacion->cpids;
 				if (pushbacklist(&paginacion->procesos, proceso)) {
 					j = 0;
 					if (libresFisica > 0) {
