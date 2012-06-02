@@ -8,7 +8,7 @@
  * Compilacion: 
  * Ejecucion:
  */
- #include "lib/particiones.h"
+#include "lib/particiones.h"
 
 int main() {
 

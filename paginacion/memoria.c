@@ -64,8 +64,8 @@ int main() {
 	do {
 		/* Carga automatica de solicitudes */
 		if (!estaVaciaSolicitudes(paginacion)) {
-			i = sizelist(paginacion.solicitudes);
-			for (j = 0; j < i; j++) cargarSolicitud(&paginacion, &err);
+			for (j = sizelist(paginacion.solicitudes); j > 0; j--)
+				cargarSolicitud(&paginacion, &err);
 		}
 		/* Ejecucion de quantum */
 		system("clear");
