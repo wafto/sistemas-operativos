@@ -22,3 +22,9 @@ int pregunta(const char* pregunta) {
 	scanf("%s", &respuesta);
 	return respuesta == 's' ? 1 : 0;
 }
+
+void linea() {
+	int i;
+	for (i = 0; i < 60; i++) printf("-");
+	printf("\n");
+}
