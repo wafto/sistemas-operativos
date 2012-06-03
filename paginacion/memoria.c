@@ -70,6 +70,13 @@ int main() {
 		/* Ejecucion de quantum */
 		system("clear");
 		imprimeTablaMemorias(paginacion);
+
+		printf("\n");
+		imprimeTablaProcesos(paginacion);
+
+		printf("\n");
+		imprimeTablaSolicitudes(paginacion);
+
 		quantum(&paginacion, &err);
 		nanosleep(&tim , &tim2);
 	} while (!salir);
