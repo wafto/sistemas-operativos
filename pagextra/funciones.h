@@ -6,9 +6,16 @@
 #include <string.h>
 #include "../util/list.h"
 
+#define FISICA  1
+#define VIRTUAL 2
 
 typedef struct {
-	/*Proceso* proceso;*/
+	int pid;
+} Proceso;
+
+
+typedef struct {
+	Proceso* proceso;
 	int num;
 } Pagina;
 
@@ -18,10 +25,17 @@ typedef struct {
 } Marco;
 
 typedef struct {
+	int tipo;
 	Marco* marcos;
 	int tam;
 } Memoria;
 
-int crearMemoria(Memoria* mem, int tam);
+typedef struct {
+	Memoria memfisica;
+	Memoria memvirtual;	
+} Paginacion;
+
+int crearMemoria(Memoria* mem, int tam, int tipo);
+int crearPaginacion(Paginacion* pag, int tam);
 
 #endif
