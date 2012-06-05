@@ -37,5 +37,6 @@ typedef struct {
 
 int crearMemoria(Memoria* mem, int tam, int tipo);
 int crearPaginacion(Paginacion* pag, int tam);
+void imprimePaginacion(Paginacion pag);
 
 #endif

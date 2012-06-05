@@ -23,3 +23,14 @@ int crearPaginacion(Paginacion* pag, int tam) {
 	crearMemoria(&pag->memvirtual, tam, VIRTUAL);
 	return 1;
 }
+
+void imprimePaginacion(Paginacion pag) {
+	int i;
+	printf("------------------------------\n");
+	printf("%-10s %-10s %-10s\n", "Marco", "Proceso", "Pagina");
+	printf("------------------------------\n");
+/*
+	printf("%d %d %d", mem->marcos[i].indice, mem->marcos[i].pagina-num, mem->marcos[i].pagina.proceso);
+*/
+
+}
