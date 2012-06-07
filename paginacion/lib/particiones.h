@@ -49,6 +49,8 @@ typedef struct {
 	int npag;
 	char usuario[MAXSTR];
 	Pagina* paginas;
+	int zcinicio;
+	int zcfinal;
 } Proceso;
 
 typedef struct Marco {
@@ -77,6 +79,7 @@ typedef struct {
 	int cpids;
 	int tampag;
 	IteratorList actual;
+	Proceso* zonacritica;
 	Meta meta;
 } Paginacion;
 
@@ -94,5 +97,7 @@ void imprimeTablaSolicitudes(Paginacion);
 void imprimeTablaProcesos(Paginacion);
 void imprimeTablaMemorias(Paginacion);
 int quantum(Paginacion*, int*);
+int estaZonaCritica(Proceso);
+int estaBloqueado(Paginacion, Proceso);
 
 #endif

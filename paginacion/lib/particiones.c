@@ -20,6 +20,8 @@ Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 		proceso->xpag = 0;
 		proceso->npag = (tam / tampag) + (tam % tampag == 0 ? 0 : 1);
 		strcpy(proceso->usuario, usuario);
+		proceso->zcinicio = (int)((double)proceso->npag * rand() / (RAND_MAX + 1.0));
+		proceso->zcfinal = (int)((double)(proceso->npag - proceso->zcinicio) * rand() / (RAND_MAX + 1.0));
 		proceso->paginas = (Pagina*) malloc(sizeof(Pagina) * proceso->npag);
 		if (proceso->paginas == NULL) {
 			free(proceso);
@@ -65,6 +67,7 @@ int inicializarPaginacion(Paginacion* paginacion, int memoria, int tampag) {
 		mem = memoria / tampag;
 		paginacion->cpids = 0;
 		paginacion->tampag = tampag;
+		paginacion->zonacritica = NULL;
 		paginacion->memfisica = crearTabla(mem, MEM_FISICA);
 		paginacion->memvirtual = crearTabla(mem, MEM_VIRTUAL);
 		initlist(&paginacion->solicitudes);
@@ -324,5 +327,13 @@ int quantum(Paginacion* pag, int* err) {
 	}
 	*err |= CRITICO;
 	return 0;
+}
+
+int estaZonaCritica(Proceso proceso) {
+	return (proceso.zcinicio >= proceso.xpag && proceso.zcfinal <= proceso.xpag) ? 1 : 0;
+}
+
+int estaBloqueado(Paginacion paginacion, Proceso proceso) {
+	return estaZonaCritica(proceso) && paginacion.zonacritica == &proceso;
 }
 
