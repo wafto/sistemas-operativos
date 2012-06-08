@@ -21,7 +21,7 @@ Proceso* crearProceso(int pid, int tam, int tampag, const char* usuario) {
 		proceso->npag = (tam / tampag) + (tam % tampag == 0 ? 0 : 1);
 		strcpy(proceso->usuario, usuario);
 		proceso->zcinicio = (int)((double)proceso->npag * rand() / (RAND_MAX + 1.0));
-		proceso->zcfinal = (int)((double)(proceso->npag - proceso->zcinicio) * rand() / (RAND_MAX + 1.0));
+		proceso->zcfinal = proceso->zcinicio + (int)((double)(proceso->npag - proceso->zcinicio) * rand() / (RAND_MAX + 1.0));
 		proceso->paginas = (Pagina*) malloc(sizeof(Pagina) * proceso->npag);
 		if (proceso->paginas == NULL) {
 			free(proceso);
@@ -305,7 +305,18 @@ int quantum(Paginacion* pag, int* err) {
 		}
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual->estado = EJECUCION;
-		proceso->paginas[proceso->xpag].tscont -= 1;
+		
+		/**********
+		if (estaZonaCritica(*proceso)) {
+			if (estaBloqueado(*pag, *proceso))
+				pag->meta.actual->estado = BLOQUEADO;
+			else
+				pag->zonacritica = proceso;
+		} else {
+			proceso->paginas[proceso->xpag].tscont -= 1;
+		}
+		********/
+
 		if (proceso->paginas[proceso->xpag].tscont <= 0) proceso->xpag += 1;
 		if (proceso->xpag >= proceso->npag) {
 			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
@@ -323,6 +334,11 @@ int quantum(Paginacion* pag, int* err) {
 			pag->meta.actual->pagina = 0;
 		}
 		pag->meta.ant = pag->meta.actual;
+		/**********
+		if (pag->meta.actual->estado == BLOQUEADO) {
+			*err |= ES_BLOQUEADO;
+		}
+		**********/
 		return 1;
 	}
 	*err |= CRITICO;
@@ -334,6 +350,6 @@ int estaZonaCritica(Proceso proceso) {
 }
 
 int estaBloqueado(Paginacion paginacion, Proceso proceso) {
-	return estaZonaCritica(proceso) && paginacion.zonacritica == &proceso;
+	return (estaZonaCritica(proceso) && paginacion.zonacritica != &proceso) ? 1 : 0;
 }
 

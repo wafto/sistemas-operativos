@@ -16,6 +16,7 @@
 #define EJECUCION 3
 #define PARADA    4
 #define FIN       5
+#define BLOQUEADO 6
 
 /* Manejo de errores */
 #define NO_SOLICITUDES    1
@@ -25,6 +26,7 @@
 #define PAGINA_FUERA     16
 #define TSCONT_INVALIDO  32
 #define CRITICO          64
+#define ES_BLOQUEADO    128
 
 /* Tipos de Memorias */
 #define MEM_FISICA  1
