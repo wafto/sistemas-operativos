@@ -25,6 +25,6 @@ int pregunta(const char* pregunta) {
 
 void linea() {
 	int i;
-	for (i = 0; i < 60; i++) printf("-");
+	for (i = 0; i < 80; i++) printf("-");
 	printf("\n");
 }

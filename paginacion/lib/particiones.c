@@ -187,15 +187,19 @@ void imprimeTablaProcesos(Paginacion paginacion) {
 	if (isemptylist(paginacion.procesos)) {
 		printf("La lista de procesos esta vacia.\n");
 	} else {
-		printf("%-12s%-12s%-12s%-12s%-12s\n", "PID", "Tamaño", "Paginas", "Ejecucion", "Usuario");
-		for (i = 0; i < 60; i++) printf("-");
+		printf("%-12s%-12s%-12s%-12s%-12s%-12s%-12s\n",
+			"PID", "Tamaño", "Paginas", "Z.C. Inicio", "Z.C. Final", "Ejecucion", "Usuario"
+		);
+		for (i = 0; i < 80; i++) printf("-");
 		printf("\n");
 		for (iter = beginlist(paginacion.procesos); iter != NULL; iter = nextlist(iter)) {
 			proceso = (Proceso*) dataiterlist(iter); 
-			printf("%-12d%-12d%-12d%-12d%-12s\n",
+			printf("%-12d%-12d%-12d%-12d%-12d%-12d%-12s\n",
 				proceso->pid,
 				proceso->tam,
 				proceso->npag,
+				proceso->zcinicio,
+				proceso->zcfinal,
 				proceso->xpag,
 				proceso->usuario
 			);
@@ -220,6 +224,7 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 			case EJECUCION: printf("%-10s", "ejecucion"); break;
 			case PARADA:    printf("%-10s", "parada");    break;
 			case FIN:       printf("%-10s", "fin");       break;
+			case BLOQUEADO: printf("%-10s", "bloqueado"); break;
 			default: printf("%-10s", "libre");
 		}
 		if (paginacion.memfisica->marcos[i].proceso == NULL) {
@@ -239,6 +244,7 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 			case EJECUCION: printf("%-10s", "ejecucion"); break;
 			case PARADA:    printf("%-10s", "parada");    break;
 			case FIN:       printf("%-10s", "fin");       break;
+			case BLOQUEADO: printf("%-10s", "bloqueado"); break;
 			default: printf("%-10s", "libre");
 		}
 		if (paginacion.memvirtual->marcos[i].proceso == NULL) {
@@ -306,16 +312,17 @@ int quantum(Paginacion* pag, int* err) {
 		pag->actual = nextlist(pag->actual);
 		pag->meta.actual->estado = EJECUCION;
 		
-		/**********
+		/* Verificamos si estamos en la zona critica */
 		if (estaZonaCritica(*proceso)) {
-			if (estaBloqueado(*pag, *proceso))
-				pag->meta.actual->estado = BLOQUEADO;
-			else
+			if (tienePrestamo(*pag, *proceso) || pag->zonacritica == NULL) {
 				pag->zonacritica = proceso;
+				proceso->paginas[proceso->xpag].tscont -= 1;
+			} else {
+				pag->meta.actual->estado = BLOQUEADO;
+			}
 		} else {
 			proceso->paginas[proceso->xpag].tscont -= 1;
 		}
-		********/
 
 		if (proceso->paginas[proceso->xpag].tscont <= 0) proceso->xpag += 1;
 		if (proceso->xpag >= proceso->npag) {
@@ -323,6 +330,9 @@ int quantum(Paginacion* pag, int* err) {
 			proceso->paginas[proceso->npag - 1].marco->estado = LIBRE;
 			proceso->paginas[proceso->npag - 1].marco->proceso = NULL;
 			proceso->paginas[proceso->npag - 1].marco->pagina = 0;
+			/* Liberacion de la zona critica */
+			if (tienePrestamo(*pag, *proceso))
+				pag->zonacritica = NULL;
 			free(proceso->paginas);
 			free(proceso);
 		}
@@ -334,11 +344,8 @@ int quantum(Paginacion* pag, int* err) {
 			pag->meta.actual->pagina = 0;
 		}
 		pag->meta.ant = pag->meta.actual;
-		/**********
-		if (pag->meta.actual->estado == BLOQUEADO) {
-			*err |= ES_BLOQUEADO;
-		}
-		**********/
+		/* Ponemos la bandera de estado en bloqueado si lo esta */
+		if (pag->meta.actual->estado == BLOQUEADO) *err |= ES_BLOQUEADO;
 		return 1;
 	}
 	*err |= CRITICO;
@@ -353,3 +360,6 @@ int estaBloqueado(Paginacion paginacion, Proceso proceso) {
 	return (estaZonaCritica(proceso) && paginacion.zonacritica != &proceso) ? 1 : 0;
 }
 
+int tienePrestamo(Paginacion paginacion, Proceso proceso) {
+	return (paginacion.zonacritica == &proceso) ? 1 : 0;
+}
