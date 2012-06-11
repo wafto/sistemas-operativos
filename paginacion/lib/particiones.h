@@ -100,7 +100,7 @@ void imprimeTablaProcesos(Paginacion);
 void imprimeTablaMemorias(Paginacion);
 int quantum(Paginacion*, int*);
 int estaZonaCritica(Proceso);
-int estaBloqueado(Paginacion, Proceso);
 int tienePrestamo(Paginacion, Proceso);
+int estaBloqueado(Paginacion, Proceso);
 
 #endif

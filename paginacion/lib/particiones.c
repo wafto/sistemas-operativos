@@ -353,13 +353,15 @@ int quantum(Paginacion* pag, int* err) {
 }
 
 int estaZonaCritica(Proceso proceso) {
-	return (proceso.zcinicio >= proceso.xpag && proceso.zcfinal <= proceso.xpag) ? 1 : 0;
-}
-
-int estaBloqueado(Paginacion paginacion, Proceso proceso) {
-	return (estaZonaCritica(proceso) && paginacion.zonacritica != &proceso) ? 1 : 0;
+	return proceso.xpag >= proceso.zcinicio && proceso.xpag <= proceso.xpag ? 1 : 0;
 }
 
 int tienePrestamo(Paginacion paginacion, Proceso proceso) {
-	return (paginacion.zonacritica == &proceso) ? 1 : 0;
+	return paginacion.zonacritica == &proceso ? 1 : 0;
 }
+
+int estaBloqueado(Paginacion paginacion, Proceso proceso) {
+	return estaZonaCritica(proceso) && tienePrestamo(paginacion, proceso) ? 1 : 0;
+}
+
+
