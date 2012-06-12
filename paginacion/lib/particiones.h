@@ -99,12 +99,14 @@ void imprimeTablaSolicitudes(Paginacion);
 void imprimeTablaProcesos(Paginacion);
 void imprimeTablaMemorias(Paginacion);
 int quantum(Paginacion*, int*);
+int metaPaginacion(Paginacion*);
+Proceso* procesoEjecucion(Paginacion);
 Pagina* paginaEjecucion(Proceso);
 Marco* marcoEjecucion(Proceso);
 void marcoLibre(Marco*);
 void intercambioMarcos(Marco*, Marco*);
 int estaZonaCritica(Proceso);
-int tienePrestamo(Paginacion, Proceso);
-int estaBloqueado(Paginacion, Proceso);
+int tienePrestamo(Paginacion, Proceso*);
+int estaBloqueado(Paginacion, Proceso*);
 
 #endif

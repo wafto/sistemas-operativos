@@ -262,18 +262,9 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 }
 
 int quantum(Paginacion* pag, int* err) {
-	Proceso *proceso, *aux;
-	Marco* marco;
-	IteratorList iter;
 	int bandera, i;
-	*err = 0;
-	if (isemptylist(pag->procesos)) *err |= NO_PROCESOS;
-	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
-	if (iter = pag->actual) proceso = (Proceso*) dataiterlist(iter);
-	if (proceso == NULL) *err |= CRITICO;
-	if (*err == 0) {
-		if (estaZonaCritica(*proceso) && pag->zonacritica == NULL)
-			pag->zonacritica = proceso;
+	Proceso* proceso;
+	if (!isemptylist(pag->procesos) && metaPaginacion(pag)) {
 		if (pag->meta.ant != NULL) {
 			if (pag->meta.ant->proceso != NULL) {
 				if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
@@ -284,44 +275,64 @@ int quantum(Paginacion* pag, int* err) {
 					else
 						pag->meta.ant->estado = ESPERA;
 				}
-			} else {
-				marcoLibre(pag->meta.ant);
 			}
 		}
-		pag->meta.actual = marcoEjecucion(*proceso);
-		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
-			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++)
-				if (pag->memfisica->marcos[i].estado == LIBRE) { bandera = 1; break; }
-			if (!bandera) i = pag->meta.actual->indice;
-			intercambioMarcos(&pag->memfisica->marcos[i], marcoEjecucion(*proceso));
-			pag->meta.actual = marcoEjecucion(*proceso);
+		if (pag->meta.actual != NULL) {
+			proceso = procesoEjecucion(*pag);
+			if (estaZonaCritica(*proceso)) {
+				if (pag->zonacritica == NULL) pag->zonacritica = proceso;
+			}
+			if (pag->meta.actual->tipo == MEM_VIRTUAL) {
+				for (bandera = 0, i = 0; i < pag->memfisica->tam; i++)
+					if (pag->memfisica->marcos[i].estado == LIBRE) { bandera = 1; break; }
+				if (!bandera) i = pag->meta.actual->indice;
+				intercambioMarcos(&pag->memfisica->marcos[i], marcoEjecucion(*proceso));
+				pag->meta.actual = marcoEjecucion(*proceso);
+			}
+			if (tienePrestamo(*pag, proceso)) {
+				pag->meta.actual->estado = EJECUCION;
+				paginaEjecucion(*proceso)->tscont -= 1;
+			} else {
+				pag->meta.actual->estado = BLOQUEADO;
+			}
+			if (paginaEjecucion(*proceso)->tscont <= 0) proceso->xpag += 1;
+			if (proceso->xpag >= proceso->npag) {
+				proceso = (Proceso*) popiterlist(&pag->procesos, pag->actual);
+				pag->actual = NULL;
+				pag->zonacritica = NULL;
+				marcoLibre(proceso->paginas[proceso->npag - 1].marco);
+				free(proceso->paginas);
+				free(proceso);
+			}
+			if (pag->zonacritica != NULL && !estaZonaCritica(*pag->zonacritica))
+				pag->zonacritica = NULL;
+			return 1;
 		}
-		if (estaBloqueado(*pag, *proceso)) {
-			pag->zonacritica = NULL;
-			pag->meta.actual->estado = BLOQUEADO;
-			paginaEjecucion(*proceso)->tscont -= 1;
-		} else {
-			pag->meta.actual->estado = EJECUCION;
-			paginaEjecucion(*proceso)->tscont -= 1;
-		}
+	}
+	*err |= NO_PROCESOS;
+	return 0;
+}
 
-		if (paginaEjecucion(*proceso)->tscont <= 0) proceso->xpag += 1;
-		if (proceso->xpag >= proceso->npag) {
-			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
-			marcoLibre(proceso->paginas[proceso->npag - 1].marco);
-			free(proceso->paginas);
-			free(proceso);
+int metaPaginacion(Paginacion* paginacion) {
+	Proceso* proceso;
+	if(!isemptylist(paginacion->procesos)) {
+		paginacion->actual = nextlist(paginacion->actual);
+		if (paginacion->actual == NULL)
+			paginacion->actual = beginlist(paginacion->procesos);
+		proceso = (Proceso*) dataiterlist(paginacion->actual);
+		if (proceso != NULL) {
+			paginacion->meta.ant = paginacion->meta.actual;
+			paginacion->meta.actual = marcoEjecucion(*proceso); 
+			return 1;
 		}
-		pag->actual = nextlist(pag->actual);
-		aux = (Proceso*) dataiterlist(pag->actual);
-		marco = aux != NULL ? aux->paginas[aux->xpag].marco : NULL;
-		if (marco == NULL && isemptylist(pag->procesos)) marcoLibre(pag->meta.actual);
-		pag->meta.ant = pag->meta.actual;
-
-		
-		return 1;
 	}
 	return 0;
+}
+
+Proceso* procesoEjecucion(Paginacion paginacion) {
+	if (paginacion.actual != NULL)
+		return (Proceso*) dataiterlist(paginacion.actual);
+	return NULL;
 }
 
 Pagina* paginaEjecucion(Proceso proceso) {
@@ -362,12 +373,12 @@ int estaZonaCritica(Proceso proceso) {
 	return proceso.xpag >= proceso.zcinicio && proceso.xpag <= proceso.xpag ? 1 : 0;
 }
 
-int tienePrestamo(Paginacion paginacion, Proceso proceso) {
-	return paginacion.zonacritica == NULL || paginacion.zonacritica == &proceso ? 1 : 0;
+int tienePrestamo(Paginacion paginacion, Proceso* proceso) {
+	return paginacion.zonacritica == NULL || paginacion.zonacritica == proceso ? 1 : 0;
 }
 
-int estaBloqueado(Paginacion paginacion, Proceso proceso) {
-	return estaZonaCritica(proceso) && !tienePrestamo(paginacion, proceso) ? 1 : 0;
+int estaBloqueado(Paginacion paginacion, Proceso* proceso) {
+	return estaZonaCritica(*proceso) && !tienePrestamo(paginacion, proceso) ? 1 : 0;
 }
 
 
