@@ -187,19 +187,17 @@ void imprimeTablaProcesos(Paginacion paginacion) {
 	if (isemptylist(paginacion.procesos)) {
 		printf("La lista de procesos esta vacia.\n");
 	} else {
-		printf("%-12s%-12s%-12s%-12s%-12s%-12s%-12s\n",
-			"PID", "Tamaño", "Paginas", "ZC. Inicio", "ZC. Final", "Ejecucion", "Usuario"
+		printf("%-12s%-12s%-12s%-12s%-12s\n",
+			"PID", "Tamaño", "Paginas", "Ejecucion", "Usuario"
 		);
 		for (i = 0; i < 80; i++) printf("-");
 		printf("\n");
 		for (iter = beginlist(paginacion.procesos); iter != NULL; iter = nextlist(iter)) {
 			proceso = (Proceso*) dataiterlist(iter); 
-			printf("%-12d%-12d%-12d%-12d%-12d%-12d%-12s\n",
+			printf("%-12d%-12d%-12d%-12d%-12s\n",
 				proceso->pid,
 				proceso->tam,
 				proceso->npag,
-				proceso->zcinicio,
-				proceso->zcfinal,
 				proceso->xpag,
 				proceso->usuario
 			);
@@ -270,7 +268,7 @@ int quantum(Paginacion* pag, int* err) {
 				if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
 					marcoLibre(pag->meta.ant);
 				} else {
-					if (estaZonaCritica(*pag->meta.ant->proceso))
+					if (estaBloqueado(*pag, pag->meta.ant->proceso))
 						pag->meta.ant->estado = BLOQUEADO;
 					else
 						pag->meta.ant->estado = ESPERA;
@@ -289,7 +287,7 @@ int quantum(Paginacion* pag, int* err) {
 				intercambioMarcos(&pag->memfisica->marcos[i], marcoEjecucion(*proceso));
 				pag->meta.actual = marcoEjecucion(*proceso);
 			}
-			if (tienePrestamo(*pag, proceso)) {
+			if (tienePrestamo(*pag, proceso) || !estaZonaCritica(*proceso)) {
 				pag->meta.actual->estado = EJECUCION;
 				paginaEjecucion(*proceso)->tscont -= 1;
 			} else {
