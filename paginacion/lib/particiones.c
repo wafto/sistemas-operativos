@@ -262,94 +262,41 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 }
 
 int quantum(Paginacion* pag, int* err) {
-	Proceso *proceso = NULL, *aux = NULL;
-	IteratorList iter;
-	Marco *marco;
-	int i, estado, pagina, bandera;
-	*err = 0;
-	if (isemptylist(pag->procesos)) {
-		*err |= NO_PROCESOS;
-		return 0;
-	}
-	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
-	if (iter = pag->actual) proceso = (Proceso*) dataiterlist(iter);
-	if (proceso != NULL) {
-		if (pag->meta.ant != NULL) {
-			if (pag->meta.ant->proceso != NULL) {
-				if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0) {
-					pag->meta.ant->estado = LIBRE;
-					pag->meta.ant->proceso = NULL;
-					pag->meta.ant->pagina = 0;
-				} else {
-					pag->meta.ant->estado = ESPERA;
-				}
-			} else {
-				pag->meta.ant->estado = LIBRE;
-				pag->meta.ant->pagina = 0;
-			}
-		}
-		pag->meta.actual = proceso->paginas[proceso->xpag].marco;
-		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
-			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++)
-				if (pag->memfisica->marcos[i].estado == LIBRE) { bandera = 1; break; }
-			if (!bandera)
-				i = pag->meta.actual->indice;
-			aux = pag->memfisica->marcos[i].proceso;
-			estado = pag->memfisica->marcos[i].estado;
-			pagina = pag->memfisica->marcos[i].pagina;
-			marco = proceso->paginas[proceso->xpag].marco;
-			pag->memfisica->marcos[i].estado = marco->estado;
-			pag->memfisica->marcos[i].proceso = marco->proceso;
-			pag->memfisica->marcos[i].pagina = marco->pagina;
-			proceso->paginas[proceso->xpag].marco = &(pag->memfisica->marcos[i]);
-			marco->estado = estado;
-			marco->proceso = aux;
-			marco->pagina = pagina;
-			if (!bandera)
-				marco->proceso->paginas[pagina].marco = marco;
-			pag->meta.actual = proceso->paginas[proceso->xpag].marco;		
-		}
-		pag->actual = nextlist(pag->actual);
-		pag->meta.actual->estado = EJECUCION;
-		
-		/* Verificamos si estamos en la zona critica */
-		if (estaZonaCritica(*proceso)) {
-			if (tienePrestamo(*pag, *proceso) || pag->zonacritica == NULL) {
-				pag->zonacritica = proceso;
-				proceso->paginas[proceso->xpag].tscont -= 1;
-			} else {
-				pag->meta.actual->estado = BLOQUEADO;
-			}
-		} else {
-			proceso->paginas[proceso->xpag].tscont -= 1;
-		}
 
-		if (proceso->paginas[proceso->xpag].tscont <= 0) proceso->xpag += 1;
-		if (proceso->xpag >= proceso->npag) {
-			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
-			proceso->paginas[proceso->npag - 1].marco->estado = LIBRE;
-			proceso->paginas[proceso->npag - 1].marco->proceso = NULL;
-			proceso->paginas[proceso->npag - 1].marco->pagina = 0;
-			/* Liberacion de la zona critica */
-			if (tienePrestamo(*pag, *proceso))
-				pag->zonacritica = NULL;
-			free(proceso->paginas);
-			free(proceso);
-		}
-		aux = (Proceso*) dataiterlist(pag->actual);
-		marco = aux != NULL ? aux->paginas[aux->xpag].marco : NULL;
-		if (marco == NULL && isemptylist(pag->procesos)) {
-			pag->meta.actual->estado = LIBRE;
-			pag->meta.actual->proceso = NULL;
-			pag->meta.actual->pagina = 0;
-		}
-		pag->meta.ant = pag->meta.actual;
-		/* Ponemos la bandera de estado en bloqueado si lo esta */
-		if (pag->meta.actual->estado == BLOQUEADO) *err |= ES_BLOQUEADO;
-		return 1;
+}
+
+Pagina* paginaEjecucion(Proceso proceso) {
+	if (proceso.xpag >= 0 && proceso.xpag < proceso.npag)
+		return &proceso.paginas[proceso.xpag];
+	return NULL;
+}
+
+Marco* marcoEjecucion(Proceso proceso) {
+	Pagina* pagina = paginaEjecucion(proceso);
+	return pagina != NULL ? pagina->marco : NULL;
+}
+
+void marcoLibre(Marco* marco) {
+	if (marco != NULL) {
+		marco->estado = LIBRE;
+		marco->proceso = NULL;
+		marco->pagina = 0;
 	}
-	*err |= CRITICO;
-	return 0;
+}
+
+void intercambioMarcos(Marco* m, Marco* n) {
+	int estado, pagina;
+	Proceso* proceso = m->proceso;
+	estado = m->estado;
+	pagina = m->pagina;
+	m->proceso = n->proceso;
+	m->estado = n->estado;
+	m->pagina = n->pagina;
+	n->proceso = proceso;
+	n->estado = estado;
+	n->pagina = pagina;
+	if (m != NULL) m->proceso->paginas[m->pagina].marco = m;
+	if (n != NULL) n->proceso->paginas[n->pagina].marco = n;
 }
 
 int estaZonaCritica(Proceso proceso) {

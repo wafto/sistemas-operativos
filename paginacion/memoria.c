@@ -93,7 +93,7 @@ int main() {
 		imprimeTablaSolicitudes(paginacion);
 
 		quantum(&paginacion, &err);
-		if (err != ES_BLOQUEADO) nanosleep(&tim , &tim2);
+		nanosleep(&tim , &tim2);
 	} while (hiloDatos.salir == NO);
 
 	system("clear");
