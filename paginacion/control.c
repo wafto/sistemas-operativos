@@ -35,6 +35,7 @@ int main() {
 				break;
 			case 1:
 				do {
+					linea();
 					printf("Se procede a agregar una nueva solicitud\n");
 					printf(" - Tamaño en memoria: ");
 					scanf("%d", &cola.nodo.dato.tam);

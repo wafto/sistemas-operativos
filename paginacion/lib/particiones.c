@@ -188,7 +188,7 @@ void imprimeTablaProcesos(Paginacion paginacion) {
 		printf("La lista de procesos esta vacia.\n");
 	} else {
 		printf("%-12s%-12s%-12s%-12s%-12s%-12s%-12s\n",
-			"PID", "Tamaño", "Paginas", "Z.C. Inicio", "Z.C. Final", "Ejecucion", "Usuario"
+			"PID", "Tamaño", "Paginas", "ZC. Inicio", "ZC. Final", "Ejecucion", "Usuario"
 		);
 		for (i = 0; i < 80; i++) printf("-");
 		printf("\n");
@@ -262,7 +262,51 @@ void imprimeTablaMemorias(Paginacion paginacion) {
 }
 
 int quantum(Paginacion* pag, int* err) {
-
+	Proceso *proceso, *aux;
+	Marco* marco;
+	IteratorList iter;
+	int bandera, i;
+	*err = 0;
+	if (isemptylist(pag->procesos)) *err |= NO_PROCESOS;
+	if (pag->actual == NULL) pag->actual = beginlist(pag->procesos);
+	if (iter = pag->actual) proceso = (Proceso*) dataiterlist(iter);
+	if (proceso == NULL) *err |= CRITICO;
+	if (*err == 0) {
+		if (pag->meta.ant != NULL) {
+			if (pag->meta.ant->proceso != NULL) {
+				if (pag->meta.ant->proceso->paginas[pag->meta.ant->pagina].tscont <= 0)
+					marcoLibre(pag->meta.ant);
+				else
+					pag->meta.ant->estado = ESPERA;
+			} else {
+				marcoLibre(pag->meta.ant);
+			}
+		}
+		pag->meta.actual = marcoEjecucion(*proceso);
+		if (pag->meta.actual->tipo == MEM_VIRTUAL) {
+			for (bandera = 0, i = 0; i < pag->memfisica->tam; i++)
+				if (pag->memfisica->marcos[i].estado == LIBRE) { bandera = 1; break; }
+			if (!bandera) i = pag->meta.actual->indice;
+			intercambioMarcos(&pag->memfisica->marcos[i], marcoEjecucion(*proceso));
+			pag->meta.actual = marcoEjecucion(*proceso);
+		}
+		pag->actual = nextlist(pag->actual);
+		pag->meta.actual->estado = EJECUCION;
+		paginaEjecucion(*proceso)->tscont -= 1;
+		if (paginaEjecucion(*proceso)->tscont <= 0) proceso->xpag += 1;
+		if (proceso->xpag >= proceso->npag) {
+			proceso = (Proceso*) popiterlist(&pag->procesos, iter);
+			marcoLibre(proceso->paginas[proceso->npag - 1].marco);
+			free(proceso->paginas);
+			free(proceso);
+		}
+		aux = (Proceso*) dataiterlist(pag->actual);
+		marco = aux != NULL ? aux->paginas[aux->xpag].marco : NULL;
+		if (marco == NULL && isemptylist(pag->procesos)) marcoLibre(pag->meta.actual);
+		pag->meta.ant = pag->meta.actual;
+		return 1;
+	}
+	return 0;
 }
 
 Pagina* paginaEjecucion(Proceso proceso) {
@@ -295,8 +339,8 @@ void intercambioMarcos(Marco* m, Marco* n) {
 	n->proceso = proceso;
 	n->estado = estado;
 	n->pagina = pagina;
-	if (m != NULL) m->proceso->paginas[m->pagina].marco = m;
-	if (n != NULL) n->proceso->paginas[n->pagina].marco = n;
+	if (m->proceso != NULL) m->proceso->paginas[m->pagina].marco = m;
+	if (n->proceso != NULL) n->proceso->paginas[n->pagina].marco = n;
 }
 
 int estaZonaCritica(Proceso proceso) {

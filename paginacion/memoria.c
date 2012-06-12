@@ -38,7 +38,7 @@ int main() {
 		perror("Error al obtener el identificador de la cola de mensajes.");
 		exit(-1);
 	}
-
+	system("clear");
 	do {
 		printf("Cuánta memoria requiere para la paginacion: ");
 		scanf("%d", &i);
